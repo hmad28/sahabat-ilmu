@@ -5,18 +5,46 @@ import * as cheerio from "cheerio";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Fungsi untuk search langsung di yufid.com
+// Fungsi untuk search di yufid.com menggunakan Google Custom Search API
 async function searchYufidDirect(query) {
   try {
-    // Search langsung di yufid.com seperti user search
-    const searchUrl = `https://yufid.com/result.html?search=${encodeURIComponent(
-      query
-    )}`;
+    // Method 1: Gunakan Google Custom Search JSON API (RECOMMENDED)
+    // Yufid CSE ID bisa dilihat dari source code yufid.com/result.html
+    const GOOGLE_CSE_API_KEY = process.env.GOOGLE_CSE_API_KEY; // Opsional
+    const YUFID_CSE_ID = process.env.YUFID_CSE_ID; // Opsional
 
-    const response = await fetch(searchUrl, {
+    if (GOOGLE_CSE_API_KEY && YUFID_CSE_ID) {
+      console.log("Using Google CSE API...");
+      const apiUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_CSE_API_KEY}&cx=${YUFID_CSE_ID}&q=${encodeURIComponent(
+        query
+      )}&num=10`;
+
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+
+      if (data.items && data.items.length > 0) {
+        return data.items.map((item) => ({
+          title: item.title,
+          url: item.link,
+          excerpt: item.snippet,
+        }));
+      }
+    }
+
+    // Method 2: Fallback ke Google Search dengan site:yufid.com
+    console.log("Using Google search fallback...");
+    const googleSearchUrl = `https://www.google.com/search?q=site:yufid.com+${encodeURIComponent(
+      query
+    )}&num=10&hl=id`;
+
+    const response = await fetch(googleSearchUrl, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br",
       },
     });
 
@@ -25,71 +53,98 @@ async function searchYufidDirect(query) {
 
     const results = [];
 
-    // Ambil hasil search dari yufid.com (sesuaikan selector dengan struktur HTML yufid)
-    // Biasanya artikel ada di class seperti .post, .entry, atau .article
-    $(".post, article, .entry").each((i, elem) => {
-      if (i < 10) {
-        // Ambil 10 hasil untuk difilter nanti
-        const title = $(elem)
-          .find("h2, h3, .entry-title, .post-title")
-          .first()
-          .text()
-          .trim();
-        const link = $(elem).find("a").first().attr("href");
-        const excerpt = $(elem)
-          .find(".entry-excerpt, .excerpt, p")
-          .first()
-          .text()
-          .trim();
+    // Parse Google search results - updated selectors for 2024
+    $("div.g, div[data-sokoban-container], div.Gx5Zad").each((i, elem) => {
+      if (results.length < 10) {
+        const $elem = $(elem);
 
-        if (title && link) {
+        // Try multiple selectors for title
+        const title =
+          $elem.find("h3").first().text().trim() ||
+          $elem.find(".LC20lb").first().text().trim() ||
+          $elem.find('[role="heading"]').first().text().trim();
+
+        // Try multiple selectors for link
+        const link =
+          $elem.find("a").first().attr("href") ||
+          $elem.find('a[href*="yufid.com"]').first().attr("href");
+
+        // Try multiple selectors for snippet
+        const snippet =
+          $elem.find(".VwiC3b").first().text().trim() ||
+          $elem.find(".lyLwlc").first().text().trim() ||
+          $elem.find(".lEBKkf").first().text().trim() ||
+          $elem.find('div[style*="-webkit-line-clamp"]').first().text().trim();
+
+        if (
+          title &&
+          link &&
+          link.includes("yufid.com") &&
+          !link.includes("/search?") &&
+          !link.includes("webcache")
+        ) {
+          // Clean URL - remove Google redirect
+          let cleanUrl = link;
+          if (link.includes("/url?q=")) {
+            cleanUrl = link.split("/url?q=")[1].split("&")[0];
+            cleanUrl = decodeURIComponent(cleanUrl);
+          }
+
           results.push({
             title,
-            url: link.startsWith("http") ? link : `https://yufid.com${link}`,
-            excerpt,
+            url: cleanUrl,
+            excerpt: snippet,
           });
         }
       }
     });
 
-    return results;
-  } catch (error) {
-    console.error("Error searching yufid directly:", error);
+    // Alternative parsing if main method fails
+    if (results.length === 0) {
+      console.log("Trying alternative parsing method...");
 
-    // Fallback: gunakan Google search jika direct search gagal
-    try {
-      const googleSearchUrl = `https://www.google.com/search?q=site:yufid.com+${encodeURIComponent(
-        query
-      )}&num=10`;
+      $("a").each((i, elem) => {
+        if (results.length < 10) {
+          const $elem = $(elem);
+          const href = $elem.attr("href");
 
-      const response = await fetch(googleSearchUrl, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        },
-      });
+          if (
+            href &&
+            href.includes("yufid.com") &&
+            !href.includes("result.html") &&
+            !href.includes("/search?") &&
+            !href.includes("webcache")
+          ) {
+            const title =
+              $elem.find("h3").text().trim() ||
+              $elem.text().trim().substring(0, 100);
 
-      const html = await response.text();
-      const $ = cheerio.load(html);
+            if (title.length > 10) {
+              let cleanUrl = href;
+              if (href.includes("/url?q=")) {
+                cleanUrl = href.split("/url?q=")[1].split("&")[0];
+                cleanUrl = decodeURIComponent(cleanUrl);
+              }
 
-      const results = [];
-      $("div.g").each((i, elem) => {
-        if (i < 10) {
-          const title = $(elem).find("h3").text();
-          const link = $(elem).find("a").attr("href");
-          const snippet = $(elem).find(".VwiC3b, .st").text();
-
-          if (title && link && link.includes("yufid.com")) {
-            results.push({ title, url: link, excerpt: snippet });
+              // Avoid duplicates
+              if (!results.find((r) => r.url === cleanUrl)) {
+                results.push({
+                  title,
+                  url: cleanUrl,
+                  excerpt: $elem.parent().text().substring(0, 200),
+                });
+              }
+            }
           }
         }
       });
-
-      return results;
-    } catch (fallbackError) {
-      console.error("Fallback search also failed:", fallbackError);
-      return [];
     }
+
+    console.log(`Found ${results.length} results from search`);
+    return results;
+  } catch (error) {
+    console.error("Error searching:", error.message);
+    return [];
   }
 }
 

@@ -114,28 +114,60 @@ Buka http://localhost:3000
 
 ## Penting!
 
-### Limitasi & Alternatif
+## ⚠️ Solusi Masalah Search
 
-Kode ini menggunakan web scraping sederhana yang mungkin:
-- Terkena rate limit oleh Google
-- Tidak selalu mendapatkan hasil akurat
-- Melanggar Terms of Service
+Yufid.com menggunakan **Google Custom Search Engine (CSE)** yang render hasil dengan JavaScript. Ada 3 solusi:
 
-### Solusi Alternatif (Lebih Baik):
+### Opsi 1: Google Custom Search API (RECOMMENDED) ✅
 
-1. **Gunakan Google Custom Search API**
-   - Daftar di: https://developers.google.com/custom-search
-   - Lebih reliable dan legal
-   - Gratis 100 queries/hari
+**Kelebihan:**
+- Paling akurat & reliable
+- Legal & official
+- Gratis 100 queries/hari
 
-2. **Integrasi dengan Yufid API** (jika tersedia)
-   - Hubungi yufid.com untuk akses API
-   - Lebih cepat dan akurat
+**Setup:**
+1. Buka https://developers.google.com/custom-search/v1/introduction
+2. Klik "Get a Key" → Buat project baru
+3. Copy API key ke `.env.local`:
+   ```
+   GOOGLE_CSE_API_KEY=your_api_key
+   ```
+4. Dapatkan Yufid CSE ID:
+   - Buka https://yufid.com/result.html
+   - View source (Ctrl+U)
+   - Cari "cx" atau "cse_id" 
+   - Atau hubungi admin yufid.com
+5. Tambahkan ke `.env.local`:
+   ```
+   YUFID_CSE_ID=yufid_cse_id
+   ```
 
-3. **Build Database Sendiri**
-   - Scrape sekali saja dan simpan di database
-   - Update berkala
-   - Lebih cepat response time
+### Opsi 2: Google Search Scraping (Fallback - sudah di-implement)
+
+Code akan otomatis fallback ke scraping Google dengan query `site:yufid.com`.
+
+**Limitasi:**
+- Bisa kena rate limit
+- Kurang stable
+- Struktur HTML Google sering berubah
+
+### Opsi 3: Build Database Sendiri
+
+Scrape yufid.com sekali, simpan di database lokal/Supabase.
+
+**Kelebihan:**
+- Paling cepat
+- Tidak depend ke external service
+- Full control
+
+**Setup:**
+```bash
+# Install Supabase client
+npm install @supabase/supabase-js
+
+# Buat scraper script
+node scripts/scrape-yufid.js
+```
 
 ## Kustomisasi
 
@@ -155,28 +187,163 @@ Edit komponen React dengan class Tailwind CSS sesuai selera.
 
 ### Deploy ke Vercel
 
+## 🚀 Quick Start (Tanpa Setup API)
+
+Untuk testing cepat tanpa perlu Google CSE API:
+
+```bash
+npm install
+npm run dev
+```
+
+Code akan otomatis fallback ke Google search scraping. Cukup set `GEMINI_API_KEY` saja.
+
+## ⚡ Cara Optimal (Setup Google CSE API)
+
+### Step 1: Gemini API Key
+
+1. Buka https://makersuite.google.com/app/apikey
+2. Login → Create API Key
+3. Copy ke `.env.local`:
+```bash
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+### Step 2: Google Custom Search API (Opsional tapi Recommended)
+
+1. **Buat API Key:**
+   - Buka https://developers.google.com/custom-search/v1/introduction
+   - Klik "Get a Key" → Create new project
+   - Enable "Custom Search API"
+   - Copy API key
+
+2. **Dapatkan Yufid CSE ID:**
+   
+   **Cara 1: View Source**
+   - Buka https://yufid.com/result.html
+   - Klik kanan → View Page Source (Ctrl+U)
+   - Cari kata "cx" atau "cse_id"
+   - Contoh: `cx: '012345678901234567890:abcdefghijk'`
+   
+   **Cara 2: Network Tab**
+   - Buka yufid.com/result.html
+   - F12 → Network tab
+   - Search sesuatu
+   - Lihat request ke `cse.google.com`
+   - Parameter `cx` adalah CSE ID
+
+3. **Set Environment Variables:**
+```bash
+GOOGLE_CSE_API_KEY=your_google_cse_api_key
+YUFID_CSE_ID=yufid_cse_id
+```
+
+### Step 3: Test Search
+
+```bash
+# Test search functionality
+node scripts/test-search.js
+```
+
+## 📝 Troubleshooting
+
+### Problem: "Tidak menemukan artikel di yufid.com"
+
+**Penyebab:**
+- Google search scraping kena rate limit
+- Struktur HTML Google berubah
+- Yufid CSE tidak mereturn hasil
+
+**Solusi:**
+
+1. **Setup Google CSE API** (recommended)
+2. **Gunakan Puppeteer** untuk render JavaScript:
+   ```bash
+   npm install puppeteer
+   ```
+   Lihat file `puppeteer-alternative.js` untuk implementasi
+
+3. **Build database lokal:**
+   ```bash
+   # Scrape semua artikel yufid sekali
+   node scripts/scrape-yufid.js
+   # Simpan ke Supabase/JSON file
+   ```
+
+### Problem: Search lambat
+
+- Set timeout lebih besar di `fetch()`
+- Gunakan caching (Redis/Vercel KV)
+- Build database lokal
+
+### Problem: Jawaban tidak akurat
+
+- Pastikan scraping berhasil (cek console log)
+- Improve prompt engineering di Gemini
+- Tambah artikel yang di-scrape (dari 3 ke 5)
+
+### Problem: Deploy ke Vercel gagal
+
+**Untuk Puppeteer di Vercel:**
+```bash
+npm install @sparticuz/chromium puppeteer-core
+```
+
+**vercel.json:**
+```json
+{
+  "functions": {
+    "app/api/chat/route.js": {
+      "memory": 3008,
+      "maxDuration": 30
+    }
+  }
+}
+```
+
+## Deploy
+
+### Vercel (Recommended)
+
 ```bash
 npm install -g vercel
 vercel
 ```
 
-Jangan lupa set environment variable `GEMINI_API_KEY` di Vercel dashboard.
+Set environment variables di Vercel dashboard:
+- `GEMINI_API_KEY` (wajib)
+- `GOOGLE_CSE_API_KEY` (opsional)
+- `YUFID_CSE_ID` (opsional)
 
-## Troubleshooting
+### Railway
 
-### Error: Cannot find module 'cheerio'
 ```bash
-npm install cheerio
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login & deploy
+railway login
+railway init
+railway up
 ```
 
-### Error: GEMINI_API_KEY not found
-- Pastikan file `.env.local` ada
-- Restart development server setelah menambah env variable
+### Docker
 
-### Tidak dapat hasil dari yufid.com
-- Cek koneksi internet
-- Kemungkinan struktur HTML yufid.com berubah
-- Perlu update selector cheerio
+```dockerfile
+FROM node:18
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+```bash
+docker build -t islamic-chatbot .
+docker run -p 3000:3000 --env-file .env.local islamic-chatbot
+```
 
 ## Lisensi
 

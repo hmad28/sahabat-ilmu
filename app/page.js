@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2, BookOpen } from "lucide-react";
+import { Send, Bot, User, Loader2, BookOpen, AlertCircle } from "lucide-react";
 
 export default function IslamicChatbot() {
   const [messages, setMessages] = useState([]);
@@ -32,6 +32,10 @@ export default function IslamicChatbot() {
         body: JSON.stringify({ message: userMessage }),
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
 
       setMessages((prev) => [
@@ -39,15 +43,17 @@ export default function IslamicChatbot() {
         {
           role: "assistant",
           content: data.reply,
-          sources: data.sources,
+          sources: data.sources || [],
         },
       ]);
     } catch (error) {
+      console.error("Error:", error);
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "Maaf, terjadi kesalahan. Silakan coba lagi.",
+          content:
+            "❌ Maaf, terjadi kesalahan saat menghubungi server. Silakan coba lagi dalam beberapa saat.",
         },
       ]);
     } finally {
@@ -62,17 +68,28 @@ export default function IslamicChatbot() {
     }
   };
 
+  const exampleQuestions = [
+    "Bagaimana cara sholat yang benar?",
+    "Apa hukum zakat fitrah?",
+    "Kapan waktu berbuka puasa?",
+    "Bagaimana tata cara wudhu?",
+    "Apa saja rukun Islam?",
+    "Hukum mengucapkan selamat natal",
+  ];
+
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-emerald-50 to-teal-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-6 shadow-lg">
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <BookOpen className="w-8 h-8" />
-          <div>
-            <h1 className="text-2xl font-bold">Chatbot Agama Islam</h1>
-            <p className="text-emerald-100 text-sm">
-              Sumber terpercaya dari Yufid.com
-            </p>
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-2">
+            <BookOpen className="w-8 h-8" />
+            <div>
+              <h1 className="text-2xl font-bold">Chatbot Agama Islam</h1>
+              <p className="text-emerald-100 text-sm">
+                Sumber terpercaya dari Yufid.com
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -81,27 +98,24 @@ export default function IslamicChatbot() {
       <div className="flex-1 overflow-y-auto p-4">
         <div className="max-w-4xl mx-auto space-y-4">
           {messages.length === 0 && (
-            <div className="text-center py-12">
+            <div className="text-center py-8">
               <BookOpen className="w-16 h-16 mx-auto text-emerald-600 mb-4" />
               <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-                Assalamu'alaikum!
+                Assalamu'alaikum Warahmatullahi Wabarakatuh
               </h2>
-              <p className="text-gray-600 mb-6">
-                Silakan tanyakan pertanyaan seputar agama Islam
+              <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                Silakan tanyakan pertanyaan seputar agama Islam. Saya akan
+                mencari jawaban dari artikel-artikel berkualitas di yufid.com
+                yang dilengkapi dengan dalil Al-Quran dan Hadits.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
-                {[
-                  "Bagaimana cara sholat yang benar?",
-                  "Apa hukum zakat fitrah?",
-                  "Kapan waktu berbuka puasa?",
-                  "Bagaimana tata cara wudhu?",
-                ].map((q, i) => (
+                {exampleQuestions.map((q, i) => (
                   <button
                     key={i}
                     onClick={() => setInput(q)}
-                    className="p-3 bg-white rounded-lg shadow hover:shadow-md transition-all text-left text-sm text-gray-700 hover:bg-emerald-50"
+                    className="p-3 bg-white rounded-lg shadow hover:shadow-md transition-all text-left text-sm text-gray-700 hover:bg-emerald-50 hover:border-emerald-200 border border-transparent"
                   >
-                    {q}
+                    💬 {q}
                   </button>
                 ))}
               </div>
@@ -131,24 +145,29 @@ export default function IslamicChatbot() {
                       : "bg-white text-gray-800"
                   }`}
                 >
-                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                  <div className="whitespace-pre-wrap leading-relaxed">
+                    {msg.content}
+                  </div>
 
                   {msg.sources && msg.sources.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-xs font-semibold text-gray-600 mb-2">
-                        Sumber:
+                    <div className="mt-4 pt-3 border-t border-gray-200">
+                      <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1">
+                        <BookOpen className="w-3 h-3" />
+                        Sumber Referensi:
                       </p>
-                      {msg.sources.map((source, i) => (
-                        <a
-                          key={i}
-                          href={source.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-emerald-600 hover:underline block mb-1"
-                        >
-                          📖 {source.title}
-                        </a>
-                      ))}
+                      <div className="space-y-1">
+                        {msg.sources.map((source, i) => (
+                          <a
+                            key={i}
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline block"
+                          >
+                            📖 {source.title}
+                          </a>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -168,7 +187,12 @@ export default function IslamicChatbot() {
                 <Bot className="w-5 h-5 text-white" />
               </div>
               <div className="bg-white rounded-2xl p-4 shadow-sm">
-                <Loader2 className="w-5 h-5 animate-spin text-emerald-600" />
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Loader2 className="w-5 h-5 animate-spin text-emerald-600" />
+                  <span className="text-sm">
+                    Mencari jawaban dari yufid.com...
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -179,23 +203,29 @@ export default function IslamicChatbot() {
 
       {/* Input Area */}
       <div className="border-t bg-white p-4 shadow-lg">
-        <div className="max-w-4xl mx-auto flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Ketik pertanyaan agama Anda di sini..."
-            className="flex-1 rounded-full border border-gray-300 px-6 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            disabled={loading}
-          />
-          <button
-            onClick={handleSend}
-            disabled={loading || !input.trim()}
-            className="bg-emerald-600 text-white rounded-full p-3 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          >
-            <Send className="w-5 h-5" />
-          </button>
+        <div className="max-w-4xl mx-auto">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Ketik pertanyaan agama Anda di sini..."
+              className="flex-1 rounded-full border border-gray-300 px-6 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-800"
+              disabled={loading}
+            />
+            <button
+              onClick={handleSend}
+              disabled={loading || !input.trim()}
+              className="bg-emerald-600 text-white rounded-full p-3 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors shadow-sm"
+              title="Kirim pertanyaan"
+            >
+              <Send className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            Tekan Enter untuk mengirim • Shift+Enter untuk baris baru
+          </p>
         </div>
       </div>
     </div>

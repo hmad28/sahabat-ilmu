@@ -3,6 +3,94 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader2, BookOpen, AlertCircle } from "lucide-react";
 
+// Component untuk format pesan dengan styling khusus
+function FormattedMessage({ content }) {
+  const lines = content.split("\n");
+
+  return (
+    <div className="space-y-3">
+      {lines.map((line, index) => {
+        // Dalil Al-Quran
+        if (line.includes("📖") || line.includes("DALIL AL-QURAN")) {
+          return (
+            <div key={index} className="mt-4 pt-3 border-t border-emerald-100">
+              <div className="bg-emerald-50 rounded-lg p-3 border-l-4 border-emerald-500">
+                <p className="font-semibold text-emerald-800 text-sm mb-1 flex items-center gap-1">
+                  📖 Dalil Al-Quran
+                </p>
+              </div>
+            </div>
+          );
+        }
+
+        // Dalil Hadits
+        if (line.includes("📚") || line.includes("DALIL HADITS")) {
+          return (
+            <div key={index} className="mt-3">
+              <div className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
+                <p className="font-semibold text-blue-800 text-sm mb-1 flex items-center gap-1">
+                  📚 Dalil Hadits
+                </p>
+              </div>
+            </div>
+          );
+        }
+
+        // Kesimpulan
+        if (line.includes("✅") || line.includes("KESIMPULAN")) {
+          return (
+            <div key={index} className="mt-3">
+              <div className="bg-amber-50 rounded-lg p-3 border-l-4 border-amber-500">
+                <p className="font-semibold text-amber-800 text-sm mb-1 flex items-center gap-1">
+                  ✅ Kesimpulan
+                </p>
+              </div>
+            </div>
+          );
+        }
+
+        // Content dalil (QS., HR., atau isi dalam kotak)
+        if (
+          line.includes("QS.") ||
+          line.includes("Q.S.") ||
+          line.includes("HR.") ||
+          (line.startsWith('"') && line.endsWith('"'))
+        ) {
+          return (
+            <div
+              key={index}
+              className="pl-3 text-sm text-gray-700 italic leading-relaxed"
+            >
+              {line}
+            </div>
+          );
+        }
+
+        // Isi kesimpulan
+        if (index > 0 && lines[index - 1].includes("✅")) {
+          return (
+            <div key={index} className="pl-3 text-sm text-gray-700 font-medium">
+              {line}
+            </div>
+          );
+        }
+
+        // Skip empty lines
+        if (line.trim() === "") {
+          return <div key={index} className="h-2" />;
+        }
+
+        // Regular paragraph
+        return (
+          <p key={index} className="text-gray-800 leading-relaxed text-[15px]">
+            {line}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function IslamicChatbot() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -145,26 +233,32 @@ export default function IslamicChatbot() {
                       : "bg-white text-gray-800"
                   }`}
                 >
-                  <div className="whitespace-pre-wrap leading-relaxed">
-                    {msg.content}
+                  <div className="prose prose-sm max-w-none overflow-hidden break-words">
+                    {msg.role === "assistant" ? (
+                      <FormattedMessage content={msg.content} />
+                    ) : (
+                      <div className="whitespace-pre-wrap leading-relaxed break-words">
+                        {msg.content}
+                      </div>
+                    )}
                   </div>
 
                   {msg.sources && msg.sources.length > 0 && (
-                    <div className="mt-4 pt-3 border-t border-gray-200">
-                      <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1">
+                    <div className="mt-4 pt-3 border-t border-gray-100">
+                      <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1">
                         <BookOpen className="w-3 h-3" />
                         Sumber Referensi:
                       </p>
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         {msg.sources.map((source, i) => (
                           <a
                             key={i}
                             href={source.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline block"
+                            className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline block bg-emerald-50 px-2 py-1.5 rounded transition-colors"
                           >
-                            📖 {source.title}
+                            📄 {source.title}
                           </a>
                         ))}
                       </div>

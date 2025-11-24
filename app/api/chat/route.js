@@ -415,21 +415,35 @@ ${article.content}
     console.log("Generating response...");
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    const prompt = `Anda asisten agama Islam. Jawab pertanyaan berdasarkan artikel dari yufid.com.
+    const prompt = `Anda adalah asisten agama Islam yang menjawab pertanyaan berdasarkan artikel dari yufid.com.
 
-ATURAN:
-1. Jawab dengan jelas dan ringkas (2-4 paragraf)
-2. Sertakan dalil Al-Quran jika ada (tulis ayat dan surat)
-3. Sertakan dalil Hadits dengan riwayat lengkap (HR. Bukhari, dll)
-4. Gunakan bahasa mudah dipahami
-5. Hanya gunakan informasi dari artikel
+ATURAN FORMAT JAWABAN:
+1. Tulis jawaban SINGKAT dan PADAT (maksimal 3 paragraf pendek)
+2. Pisahkan bagian dalil dengan jelas menggunakan format khusus
+3. Gunakan bahasa yang mudah dipahami
+4. Fokus pada INTI jawaban saja, tidak bertele-tele
 
-ARTIKEL:
+FORMAT WAJIB:
+[Jawaban singkat 2-3 paragraf, langsung ke inti permasalahan]
+
+📖 DALIL AL-QURAN:
+[Jika ada dalil Al-Quran, tulis: "QS. [Nama Surat]:[Ayat] - '[Terjemahan singkat]'"]
+[Jika tidak ada, tulis: "Tidak disebutkan dalam artikel"]
+
+📚 DALIL HADITS:
+[Jika ada hadits, tulis: "[Isi hadits singkat]" (HR. [Perawi] no. [nomor jika ada])"]
+[Jika tidak ada, tulis: "Tidak disebutkan dalam artikel"]
+
+✅ KESIMPULAN:
+[1 kalimat ringkas tentang hukum/jawaban akhir]
+
+ARTIKEL DARI YUFID.COM:
 ${context}
 
-PERTANYAAN: "${message}"
+PERTANYAAN USER:
+"${message}"
 
-Jawab sekarang:`;
+Jawab dengan format di atas, SINGKAT dan JELAS!`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;

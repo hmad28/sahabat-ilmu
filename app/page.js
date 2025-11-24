@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader2, BookOpen, AlertCircle } from "lucide-react";
+import Image from "next/image";
 
 // Component untuk format pesan dengan styling khusus
 function FormattedMessage({ content }) {
@@ -168,16 +169,18 @@ export default function IslamicChatbot() {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-emerald-50 to-teal-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-6 shadow-lg">
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 shadow-lg">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-2">
-            <BookOpen className="w-8 h-8" />
-            <div>
-              <h1 className="text-2xl font-bold">Chatbot Agama Islam</h1>
-              <p className="text-emerald-100 text-sm">
-                Sumber terpercaya dari Yufid.com
-              </p>
-            </div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">
+              <Image
+                src="/images/sahabat-ilmu-vertikal2.png"
+                alt="Logo"  
+                width={200}
+                height={50}
+                className="inline-block"
+              />
+            </h1>
           </div>
         </div>
       </div>
@@ -187,7 +190,14 @@ export default function IslamicChatbot() {
         <div className="max-w-4xl mx-auto space-y-4">
           {messages.length === 0 && (
             <div className="text-center py-8">
-              <BookOpen className="w-16 h-16 mx-auto text-emerald-600 mb-4" />
+              {/* <BookOpen className="w-16 h-16 mx-auto text-emerald-600 mb-4" /> */}
+              <Image
+                src="/images/sahabat-ilmu-horizontal2.png"
+                alt="Logo"
+                width={200}
+                height={50}
+                className="inline-block"
+              />
               <h2 className="text-2xl font-semibold text-gray-800 mb-2">
                 Assalamu'alaikum Warahmatullahi Wabarakatuh
               </h2>

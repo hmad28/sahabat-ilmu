@@ -9,7 +9,9 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 async function searchYufidDirect(query) {
   try {
     // Search langsung di yufid.com seperti user search
-    const searchUrl = `https://yufid.com/?s=${encodeURIComponent(query)}`;
+    const searchUrl = `https://yufid.com/result.html?search=${encodeURIComponent(
+      query
+    )}`;
 
     const response = await fetch(searchUrl, {
       headers: {

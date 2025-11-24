@@ -14,20 +14,34 @@ async function searchYufidDirect(query) {
 
     if (GOOGLE_CSE_API_KEY && YUFID_CSE_ID) {
       console.log("Using Google CSE API...");
-      const apiUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_CSE_API_KEY}&cx=${YUFID_CSE_ID}&q=${encodeURIComponent(
-        query
-      )}&num=10`;
+      try {
+        const apiUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_CSE_API_KEY}&cx=${YUFID_CSE_ID}&q=${encodeURIComponent(
+          query
+        )}&num=10`;
 
-      const response = await fetch(apiUrl);
-      const data = await response.json();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-      if (data.items && data.items.length > 0) {
-        console.log(`Found ${data.items.length} results from CSE API`);
-        return data.items.map((item) => ({
-          title: item.title,
-          url: item.link,
-          excerpt: item.snippet,
-        }));
+        const response = await fetch(apiUrl, {
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        const data = await response.json();
+
+        if (data.items && data.items.length > 0) {
+          console.log(`Found ${data.items.length} results from CSE API`);
+          return data.items.map((item) => ({
+            title: item.title,
+            url: item.link,
+            excerpt: item.snippet,
+          }));
+        }
+      } catch (cseError) {
+        console.log(
+          "CSE API failed, falling back to scraping:",
+          cseError.message
+        );
       }
     }
 
@@ -37,16 +51,21 @@ async function searchYufidDirect(query) {
       query
     )}&num=10&hl=id`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     const response = await fetch(googleSearchUrl, {
+      signal: controller.signal,
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         Accept:
           "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Accept-Encoding": "gzip, deflate, br",
       },
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -57,23 +76,20 @@ async function searchYufidDirect(query) {
 
     const results = [];
 
-    // Parse Google search results - updated selectors for 2024
+    // Parse Google search results
     $("div.g, div[data-sokoban-container], div.Gx5Zad").each((i, elem) => {
       if (results.length < 10) {
         const $elem = $(elem);
 
-        // Try multiple selectors for title
         const title =
           $elem.find("h3").first().text().trim() ||
           $elem.find(".LC20lb").first().text().trim() ||
           $elem.find('[role="heading"]').first().text().trim();
 
-        // Try multiple selectors for link
         const link =
           $elem.find("a").first().attr("href") ||
           $elem.find('a[href*="yufid.com"]').first().attr("href");
 
-        // Try multiple selectors for snippet
         const snippet =
           $elem.find(".VwiC3b").first().text().trim() ||
           $elem.find(".lyLwlc").first().text().trim() ||
@@ -87,7 +103,6 @@ async function searchYufidDirect(query) {
           !link.includes("/search?") &&
           !link.includes("webcache")
         ) {
-          // Clean URL - remove Google redirect
           let cleanUrl = link;
           if (link.includes("/url?q=")) {
             cleanUrl = link.split("/url?q=")[1].split("&")[0];
@@ -103,10 +118,9 @@ async function searchYufidDirect(query) {
       }
     });
 
-    // Alternative parsing if main method fails
+    // Alternative parsing
     if (results.length === 0) {
-      console.log("Trying alternative parsing method...");
-
+      console.log("Trying alternative parsing...");
       $("a").each((i, elem) => {
         if (results.length < 10) {
           const $elem = $(elem);
@@ -116,8 +130,7 @@ async function searchYufidDirect(query) {
             href &&
             href.includes("yufid.com") &&
             !href.includes("result.html") &&
-            !href.includes("/search?") &&
-            !href.includes("webcache")
+            !href.includes("/search?")
           ) {
             const title =
               $elem.find("h3").text().trim() ||
@@ -130,7 +143,6 @@ async function searchYufidDirect(query) {
                 cleanUrl = decodeURIComponent(cleanUrl);
               }
 
-              // Avoid duplicates
               if (!results.find((r) => r.url === cleanUrl)) {
                 results.push({
                   title,
@@ -152,16 +164,23 @@ async function searchYufidDirect(query) {
   }
 }
 
-// Fungsi untuk scrape konten lengkap dari artikel yufid.com
+// Fungsi untuk scrape konten dari artikel
 async function scrapeYufidArticle(url) {
   try {
     console.log(`Scraping: ${url}`);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
     const response = await fetch(url, {
+      signal: controller.signal,
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
       },
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -170,14 +189,12 @@ async function scrapeYufidArticle(url) {
     const html = await response.text();
     const $ = cheerio.load(html);
 
-    // Ambil judul
     const title =
       $("h1.entry-title").first().text().trim() ||
       $("h1.post-title").first().text().trim() ||
       $("h1").first().text().trim() ||
       "Untitled";
 
-    // Ambil konten artikel - coba berbagai selector
     let content = "";
     const contentSelectors = [
       ".entry-content",
@@ -196,44 +213,37 @@ async function scrapeYufidArticle(url) {
       }
     }
 
-    // Clean up content
-    content = content
-      .replace(/\s+/g, " ")
-      .replace(/\n+/g, "\n")
-      .replace(/\t+/g, " ")
-      .trim();
+    content = content.replace(/\s+/g, " ").replace(/\n+/g, "\n").trim();
 
-    // Hitung "skor kelengkapan" berdasarkan indikator
     const completenessScore = calculateCompleteness(content);
 
     console.log(
-      `Scraped ${url}: ${content.length} chars, score: ${completenessScore}`
+      `Scraped: ${title.substring(0, 50)}... (${
+        content.length
+      } chars, score: ${completenessScore})`
     );
 
     return {
       title,
       url,
-      content: content.substring(0, 5000), // Limit untuk tidak overflow context
+      content: content.substring(0, 5000),
       completenessScore,
       contentLength: content.length,
     };
   } catch (error) {
-    console.error("Error scraping article:", url, error.message);
+    console.error(`Error scraping ${url}:`, error.message);
     return null;
   }
 }
 
-// Fungsi untuk menghitung kelengkapan artikel
 function calculateCompleteness(content) {
   let score = 0;
   const lowerContent = content.toLowerCase();
 
-  // Indikator artikel lengkap
   if (
     lowerContent.includes("al-quran") ||
     lowerContent.includes("al quran") ||
-    lowerContent.includes("qs.") ||
-    lowerContent.includes("q.s.")
+    lowerContent.includes("qs.")
   )
     score += 3;
   if (lowerContent.includes("hadits") || lowerContent.includes("hadis"))
@@ -245,40 +255,33 @@ function calculateCompleteness(content) {
   if (lowerContent.includes("dalil")) score += 2;
   if (lowerContent.includes("ulama")) score += 1;
   if (lowerContent.includes("hukum")) score += 1;
-  if (lowerContent.includes("syaikh") || lowerContent.includes("syekh"))
-    score += 1;
   if (content.length > 1000) score += 2;
   if (content.length > 2500) score += 2;
-  if (content.length > 4000) score += 1;
 
   return score;
 }
 
-// Fungsi untuk filter pertanyaan yang JELAS BUKAN tentang agama
 function isCompletelyOffTopic(question) {
   const lowerQuestion = question.toLowerCase();
 
-  // Hanya tolak pertanyaan yang JELAS tidak ada hubungannya dengan agama
   const offTopicPatterns = [
     /makanan.*enak/i,
     /restoran.*terbaik/i,
     /resep.*masak/i,
     /film.*bagus/i,
-    /musik.*favorit/i,
+    /musik/i,
     /sepak bola/i,
-    /game.*seru/i,
-    /laptop.*terbaik/i,
+    /game/i,
+    /laptop/i,
     /hp.*murah/i,
     /tempat wisata/i,
-    /cuaca.*hari ini/i,
+    /cuaca/i,
   ];
 
-  // Check jika pertanyaan match dengan pattern yang jelas off-topic
   const isOffTopic = offTopicPatterns.some((pattern) =>
     pattern.test(lowerQuestion)
   );
 
-  // Jika mengandung kata kunci agama, pasti bukan off-topic
   const religiousKeywords = [
     "islam",
     "allah",
@@ -286,34 +289,24 @@ function isCompletelyOffTopic(question) {
     "rasul",
     "quran",
     "hadis",
-    "hadits",
     "sholat",
     "salat",
-    "shalat",
     "puasa",
     "zakat",
     "haji",
-    "umrah",
     "doa",
     "sunnah",
     "haram",
     "halal",
-    "syariat",
-    "fiqih",
     "ibadah",
-    "tauhid",
-    "iman",
     "muslim",
     "masjid",
-    "ustadz",
-    "ulama",
   ];
 
   const hasReligiousKeyword = religiousKeywords.some((keyword) =>
     lowerQuestion.includes(keyword)
   );
 
-  // Jika ada kata kunci agama, pasti tidak off-topic
   if (hasReligiousKeyword) {
     return false;
   }
@@ -323,137 +316,157 @@ function isCompletelyOffTopic(question) {
 
 export async function POST(request) {
   try {
+    // Validate Gemini API Key
+    if (!process.env.GEMINI_API_KEY) {
+      console.error("GEMINI_API_KEY is not set");
+      return NextResponse.json(
+        {
+          reply:
+            "⚠️ Konfigurasi API belum lengkap. Silakan hubungi administrator untuk mengatur GEMINI_API_KEY.",
+          sources: [],
+        },
+        { status: 500 }
+      );
+    }
+
     const { message } = await request.json();
+
+    if (!message || message.trim().length === 0) {
+      return NextResponse.json(
+        {
+          reply: "Silakan masukkan pertanyaan Anda.",
+          sources: [],
+        },
+        { status: 400 }
+      );
+    }
 
     console.log("User question:", message);
 
-    // Hanya filter pertanyaan yang JELAS bukan tentang agama
+    // Filter off-topic
     if (isCompletelyOffTopic(message)) {
       return NextResponse.json({
         reply:
-          "Maaf, saya adalah chatbot khusus untuk pertanyaan seputar agama Islam. Pertanyaan Anda sepertinya tidak berkaitan dengan topik agama.\n\nSaya dapat membantu menjawab pertanyaan tentang:\n• Ibadah (sholat, puasa, zakat, haji)\n• Fiqih dan hukum Islam\n• Al-Quran dan Hadits\n• Akhlak dan adab Islam\n• Tauhid dan iman\n• Kehidupan Islami sehari-hari\n\nSilakan ajukan pertanyaan seputar Islam. Apa yang ingin Anda tanyakan?",
+          "Maaf, saya khusus menjawab pertanyaan agama Islam. Silakan tanyakan seputar ibadah, fiqih, Al-Quran, Hadits, atau topik Islam lainnya.",
         sources: [],
       });
     }
 
-    // 1. Search di yufid.com dengan query user
+    // Search
     console.log("Searching yufid.com...");
     const searchResults = await searchYufidDirect(message);
 
     if (searchResults.length === 0) {
       return NextResponse.json({
-        reply: `Maaf, saya tidak menemukan artikel di yufid.com untuk pertanyaan "${message}".\n\n💡 Tips:\n• Coba gunakan kata kunci yang lebih spesifik\n• Gunakan istilah yang umum dalam Islam\n• Contoh: "hukum shalat dhuha", "tata cara wudhu", "zakat fitrah"\n\nSilakan coba pertanyaan lain!`,
+        reply: `Maaf, tidak menemukan artikel untuk "${message}".\n\nCoba gunakan kata kunci berbeda atau lebih spesifik.`,
         sources: [],
       });
     }
 
-    console.log(`Found ${searchResults.length} articles from yufid.com`);
+    console.log(`Found ${searchResults.length} articles`);
 
-    // 2. Scrape konten dari hasil pencarian (ambil 5 artikel pertama untuk efisiensi)
+    // Scrape articles
     console.log("Scraping articles...");
     const articlesToScrape = searchResults.slice(0, 5);
-    const scrapingPromises = articlesToScrape.map((result) =>
-      scrapeYufidArticle(result.url)
-    );
-    const scrapedArticles = await Promise.all(scrapingPromises);
 
-    // Filter yang berhasil di-scrape dan punya konten cukup
-    const validArticles = scrapedArticles.filter(
-      (article) => article !== null && article.content.length > 100
+    const scrapedArticles = await Promise.allSettled(
+      articlesToScrape.map((result) => scrapeYufidArticle(result.url))
     );
+
+    const validArticles = scrapedArticles
+      .filter(
+        (result) => result.status === "fulfilled" && result.value !== null
+      )
+      .map((result) => result.value)
+      .filter((article) => article.content.length > 100);
 
     if (validArticles.length === 0) {
       return NextResponse.json({
-        reply: `Maaf, saya mengalami kesulitan mengakses konten artikel dari yufid.com saat ini.\n\nNamun, saya menemukan artikel-artikel berikut yang mungkin relevan:\n\n${searchResults
-          .slice(0, 5)
+        reply: `Maaf, kesulitan mengakses artikel saat ini.\n\nArtikel yang mungkin relevan:\n\n${searchResults
+          .slice(0, 3)
           .map((r, i) => `${i + 1}. ${r.title}\n   ${r.url}`)
-          .join(
-            "\n\n"
-          )}\n\nSilakan kunjungi link di atas untuk membaca langsung, atau coba lagi dalam beberapa saat.`,
-        sources: searchResults.slice(0, 5),
+          .join("\n\n")}`,
+        sources: searchResults.slice(0, 3),
       });
     }
 
-    // 3. Sort berdasarkan kelengkapan dan ambil 3 terbaik
+    // Select top 3
     const top3Articles = validArticles
       .sort((a, b) => b.completenessScore - a.completenessScore)
       .slice(0, 3);
 
-    console.log(
-      `Selected top 3 articles based on completeness:`,
-      top3Articles.map((a) => ({ title: a.title, score: a.completenessScore }))
-    );
+    console.log(`Using top ${top3Articles.length} articles`);
 
-    // 4. Gabungkan konten untuk context
+    // Build context
     const context = top3Articles
       .map(
         (article, i) => `
 === ARTIKEL ${i + 1} ===
 Judul: ${article.title}
-Sumber: ${article.url}
 
-Isi Artikel:
+Isi:
 ${article.content}
-
 ===========================
 `
       )
       .join("\n\n");
 
-    // 5. Generate response dengan Gemini
-    console.log("Generating response with Gemini AI...");
+    // Generate with Gemini
+    console.log("Generating response...");
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-    const prompt = `Anda adalah asisten ahli agama Islam yang membantu menjawab pertanyaan berdasarkan artikel dari yufid.com.
+    const prompt = `Anda asisten agama Islam. Jawab pertanyaan berdasarkan artikel dari yufid.com.
 
-ATURAN PENTING:
-1. Baca dan pahami SEMUA artikel yang diberikan
-2. Jawab pertanyaan user dengan ringkas dan jelas
-3. WAJIB sertakan dalil Al-Quran jika disebutkan dalam artikel (tulis ayat dan suratnya)
-4. WAJIB sertakan dalil Hadits dengan RIWAYAT LENGKAP jika ada (contoh: HR. Bukhari no. 123, HR. Muslim)
-5. Gunakan bahasa Indonesia yang mudah dipahami
-6. Jika artikel menyebutkan pendapat ulama, sebutkan nama ulamanya
-7. Fokus pada informasi dari artikel - JANGAN menambah dari pengetahuan pribadi
-8. Jika informasi kurang lengkap, katakan "Berdasarkan artikel dari yufid.com yang saya temukan..."
+ATURAN:
+1. Jawab dengan jelas dan ringkas (2-4 paragraf)
+2. Sertakan dalil Al-Quran jika ada (tulis ayat dan surat)
+3. Sertakan dalil Hadits dengan riwayat lengkap (HR. Bukhari, dll)
+4. Gunakan bahasa mudah dipahami
+5. Hanya gunakan informasi dari artikel
 
-FORMAT JAWABAN YANG BAIK:
-- Mulai dengan penjelasan langsung (2-3 paragraf)
-- Cantumkan dalil Al-Quran jika ada
-- Cantumkan dalil Hadits dengan riwayat lengkap jika ada
-- Tutup dengan kesimpulan singkat
-
-ARTIKEL DARI YUFID.COM:
+ARTIKEL:
 ${context}
 
-PERTANYAAN USER:
-"${message}"
+PERTANYAAN: "${message}"
 
-Jawab dengan jelas, ringkas, dan berdasarkan artikel di atas!`;
+Jawab sekarang:`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    let reply = response.text();
+    const reply = response.text();
 
-    // Tambahkan catatan jika jawaban mungkin tidak lengkap
-    if (validArticles.length < 3 || validArticles[0].contentLength < 500) {
-      reply += `\n\n📝 *Catatan: Jawaban ini berdasarkan ${validArticles.length} artikel yang berhasil diakses. Untuk informasi lebih lengkap, silakan kunjungi sumber di bawah.*`;
-    }
-
-    // 6. Return response dengan sources
     return NextResponse.json({
       reply: reply,
-      sources: top3Articles.map((article) => ({
-        title: article.title,
-        url: article.url,
+      sources: top3Articles.map((a) => ({
+        title: a.title,
+        url: a.url,
       })),
     });
   } catch (error) {
-    console.error("Error in chat API:", error);
+    console.error("API Error:", error);
+
+    // More specific error messages
+    let errorMessage = "Maaf, terjadi kesalahan. Silakan coba lagi.";
+
+    if (error.message.includes("API key")) {
+      errorMessage = "⚠️ Error: API key tidak valid. Hubungi administrator.";
+    } else if (
+      error.message.includes("timeout") ||
+      error.message.includes("aborted")
+    ) {
+      errorMessage =
+        "⏱️ Timeout: Koneksi terlalu lama. Coba lagi dengan kata kunci lebih sederhana.";
+    } else if (error.message.includes("fetch")) {
+      errorMessage =
+        "🌐 Error koneksi. Pastikan internet stabil dan coba lagi.";
+    }
+
     return NextResponse.json(
       {
-        reply:
-          "Maaf, terjadi kesalahan teknis saat memproses pertanyaan Anda.\n\n🔧 Saran:\n• Coba lagi dalam beberapa saat\n• Gunakan kata kunci yang lebih sederhana\n• Pastikan koneksi internet Anda stabil\n\nJika masalah berlanjut, silakan hubungi administrator.",
+        reply: errorMessage,
         sources: [],
+        error:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
       },
       { status: 500 }
     );

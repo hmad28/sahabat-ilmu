@@ -413,7 +413,7 @@ ${article.content}
 
     // Generate with Gemini
     console.log("Generating response...");
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `Anda asisten agama Islam. Jawab pertanyaan berdasarkan artikel dari yufid.com.
 

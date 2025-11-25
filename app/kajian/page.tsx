@@ -11,8 +11,7 @@ import {
   BookOpen,
   Filter,
   X,
-  Menu,
-  ArrowLeft
+  ArrowLeft,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -130,66 +129,56 @@ export default function KajianListPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 border-b-1 border-gray-200 text-white p-3 md:p-4 shadow-lg">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
+      {/* Header - CLEANED UP VERSION */}
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-6">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-1.5 md:gap-2 cursor-pointer"
+              className="flex items-center gap-2 hover:bg-white/10 px-3 py-2 rounded-lg transition-colors"
             >
-              <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
-              <span className="font-medium text-sm md:text-base">Kembali</span>
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Kembali</span>
             </button>
+
             <div className="flex items-center gap-2">
-              {!session && (
-                <a
+              {!session ? (
+                <Link
                   href="/register"
-                  className="hidden sm:flex bg-white text-emerald-600 text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-lg hover:bg-white/90 transition-all items-center gap-1.5 shadow-md"
+                  className="bg-white text-emerald-600 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-white/90 transition-all flex items-center gap-2 shadow-md"
                 >
                   <User className="w-4 h-4" />
-                  <span>Daftar Jadi Penulis</span>
-                </a>
-              )}
-
-              {session && (
-                <a
+                  <span className="hidden sm:inline">Daftar Jadi Penulis</span>
+                  <span className="sm:hidden">Daftar</span>
+                </Link>
+              ) : (
+                <Link
                   href="/dashboard"
-                  className="hidden sm:flex bg-white text-emerald-600 text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-lg hover:bg-white/90 transition-all items-center gap-1.5 shadow-md"
+                  className="bg-white text-emerald-600 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-white/90 transition-all flex items-center gap-2 shadow-md"
                 >
                   <User className="w-4 h-4" />
-                  <span>Dashboard</span>
-                </a>
+                  <span className="hidden sm:inline">Dashboard</span>
+                  <span className="sm:hidden">Menu</span>
+                </Link>
               )}
+            </div>
+          </div>
 
-              <button
-                onClick={() => setShowSidebar(!showSidebar)}
-                className="lg:hidden bg-white/20 text-xs px-3 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center gap-1.5"
-              >
-                <Menu className="w-4 h-4" />
-                <span className="hidden sm:inline">Kajian</span>
-              </button>
+          <div className="flex items-center gap-3">
+            <BookOpen className="w-10 h-10" />
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold">Semua Kajian</h1>
+              <p className="text-emerald-50 text-sm md:text-base mt-1">
+                Jelajahi koleksi kajian Islam kami
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex items-center gap-3 mb-4">
-            <BookOpen className="w-10 h-10" />
-            <h1 className="text-4xl font-bold">Semua Kajian</h1>
-          </div>
-          <p className="text-emerald-50 text-lg">
-            Jelajahi koleksi kajian Islam kami
-          </p>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Search Bar with Filter */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="max-w-3xl">
             <div className="relative flex gap-2">
               {/* Search Input */}

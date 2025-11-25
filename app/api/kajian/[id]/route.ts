@@ -1,5 +1,3 @@
-// src/app/api/kajian/[id]/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -10,7 +8,7 @@ import { eq } from "drizzle-orm";
 // PUT - Update kajian (requires auth + ownership or super admin)
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // Changed: params is now a Promise
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -19,7 +17,8 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const id = parseInt(params.id);
+    const { id: idParam } = await params; // Changed: await params
+    const id = parseInt(idParam);
     const body = await req.json();
 
     // Check if kajian exists
@@ -98,7 +97,7 @@ export async function PUT(
 // DELETE - Delete kajian (requires auth + ownership or super admin)
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // Changed: params is now a Promise
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -107,7 +106,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const id = parseInt(params.id);
+    const { id: idParam } = await params; // Changed: await params
+    const id = parseInt(idParam);
 
     // Check if kajian exists
     const [existingKajian] = await db

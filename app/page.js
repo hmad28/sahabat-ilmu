@@ -213,7 +213,7 @@ export default function IslamicChatbot() {
                   <span>Daftar Jadi Penulis</span>
                 </a>
               )}
-              
+
               {session && (
                 <a
                   href="/dashboard"
@@ -223,7 +223,7 @@ export default function IslamicChatbot() {
                   <span>Dashboard</span>
                 </a>
               )}
-  
+
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
                 className="lg:hidden bg-white/20 text-xs px-3 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center gap-1.5"
@@ -286,8 +286,12 @@ export default function IslamicChatbot() {
                 >
                   {msg.role === "assistant" && (
                     <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
-                      <Bot className="w-4 h-4 md:w-5 md:h-5 text-white" />
-
+                      <Image
+                        src="/images/Sahabat-logo2.png"
+                        alt="Logo"
+                        width={25}
+                        height={25}
+                      />
                     </div>
                   )}
 
@@ -355,7 +359,12 @@ export default function IslamicChatbot() {
               {loading && (
                 <div className="flex gap-2 md:gap-3 justify-start">
                   <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                    <Image
+                      src="/images/Sahabat-logo2.png"
+                      alt="Logo"
+                      width={25}
+                      height={25}
+                    />
                   </div>
                   <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm">
                     <div className="flex items-center gap-2 text-gray-600">
@@ -432,7 +441,7 @@ export default function IslamicChatbot() {
                     <span>Daftar Jadi Penulis</span>
                   </a>
                 )}
-                
+
                 {session && (
                   <a
                     href="/dashboard"

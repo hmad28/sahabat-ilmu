@@ -1,5 +1,3 @@
-// src/app/api/kajian/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -13,7 +11,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
 
-    let query = db
+    // Simple approach: fetch all then filter in code if needed
+    const query = db
       .select({
         id: kajian.id,
         title: kajian.title,
@@ -39,12 +38,12 @@ export async function GET(req: NextRequest) {
       .leftJoin(users, eq(kajian.authorId, users.id))
       .orderBy(desc(kajian.createdAt));
 
-    // Filter by status if provided
-    if (status && status !== "all") {
-      query = query.where(eq(kajian.status, status));
-    }
+    let result = await query;
 
-    const result = await query;
+    // Filter by status after query if needed
+    if (status && status !== "all") {
+      result = result.filter((k) => k.status === status);
+    }
 
     return NextResponse.json(result);
   } catch (error: any) {
@@ -55,6 +54,8 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+// POST remains the same...
 
 // POST - Create new kajian (requires auth)
 export async function POST(req: NextRequest) {

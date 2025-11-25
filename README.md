@@ -1,358 +1,732 @@
-# Chatbot Agama Islam - Yufid.com
-
-Chatbot AI berbasis Next.js dan Gemini AI yang khusus menjawab pertanyaan agama Islam dengan sumber terpercaya dari yufid.com.
-
-## Fitur
-
-- ✅ Hanya menjawab pertanyaan seputar agama Islam
-- ✅ Semua jawaban diambil dari yufid.com (tidak dari pengetahuan AI sendiri)
-- ✅ Dilengkapi dalil Al-Quran dan Hadits beserta riwayatnya
-- ✅ Bahasa yang mudah dipahami untuk orang awam
-- ✅ Sumber referensi yang jelas dari yufid.com
-- ✅ Otomatis redirect pertanyaan non-agama ke topik agama
-
-## Teknologi
-
-- **Next.js 14** - Framework React
-- **Gemini AI** - AI Engine dari Google
-- **Cheerio** - Web scraping
-- **Tailwind CSS** - Styling
-- **Lucide React** - Icons
-
-## Instalasi
-
-### 1. Clone atau buat project baru
-
-```bash
-npx create-next-app@latest islamic-chatbot
-cd islamic-chatbot
-```
-
-### 2. Install dependencies
-
-```bash
-npm install @google/generative-ai cheerio lucide-react
-```
-
-### 3. Struktur Folder
-
-```
-islamic-chatbot/
-├── app/
-│   ├── api/
-│   │   └── chat/
-│   │       └── route.js          # API endpoint
-│   ├── page.js                   # Halaman utama (chatbot UI)
-│   ├── layout.js
-│   └── globals.css
-├── .env.local                    # Environment variables
-├── package.json
-└── tailwind.config.js
-```
-
-### 4. Setup Environment Variables
-
-Buat file `.env.local` di root folder:
-
-```bash
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-**Cara mendapatkan Gemini API Key:**
-1. Kunjungi https://makersuite.google.com/app/apikey
-2. Login dengan akun Google
-3. Klik "Create API Key"
-4. Copy API key dan paste ke `.env.local`
-
-### 5. Konfigurasi Tailwind CSS
-
-**tailwind.config.js:**
-```javascript
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
-```
-
-**app/globals.css:**
-```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-```
-
-### 6. File Utama
-
-**app/page.js** - Copy komponen React dari artifact pertama
-
-**app/api/chat/route.js** - Copy kode API dari artifact kedua
-
-### 7. Jalankan Development Server
-
-```bash
-npm run dev
-```
-
-Buka http://localhost:3000
-
-## Cara Kerja
-
-1. **User mengirim pertanyaan** → Sistem cek apakah pertanyaan tentang agama
-2. **Jika bukan agama** → Bot meminta user untuk bertanya tentang agama
-3. **Jika tentang agama** → Search di yufid.com menggunakan Google
-4. **Scrape konten** → Ambil artikel dari top 3 hasil pencarian
-5. **Generate jawaban** → Gemini AI menganalisis konten dan menjawab
-6. **Return response** → Jawaban + dalil + sumber dari yufid.com
-
-## Penting!
-
-## ⚠️ Solusi Masalah Search
-
-Yufid.com menggunakan **Google Custom Search Engine (CSE)** yang render hasil dengan JavaScript. Ada 3 solusi:
-
-### Opsi 1: Google Custom Search API (RECOMMENDED) ✅
-
-**Kelebihan:**
-- Paling akurat & reliable
-- Legal & official
-- Gratis 100 queries/hari
-
-**Setup:**
-1. Buka https://developers.google.com/custom-search/v1/introduction
-2. Klik "Get a Key" → Buat project baru
-3. Copy API key ke `.env.local`:
-   ```
-   GOOGLE_CSE_API_KEY=your_api_key
-   ```
-4. Dapatkan Yufid CSE ID:
-   - Buka https://yufid.com/result.html
-   - View source (Ctrl+U)
-   - Cari "cx" atau "cse_id" 
-   - Atau hubungi admin yufid.com
-5. Tambahkan ke `.env.local`:
-   ```
-   YUFID_CSE_ID=yufid_cse_id
-   ```
-
-### Opsi 2: Google Search Scraping (Fallback - sudah di-implement)
-
-Code akan otomatis fallback ke scraping Google dengan query `site:yufid.com`.
-
-**Limitasi:**
-- Bisa kena rate limit
-- Kurang stable
-- Struktur HTML Google sering berubah
-
-### Opsi 3: Build Database Sendiri
-
-Scrape yufid.com sekali, simpan di database lokal/Supabase.
-
-**Kelebihan:**
-- Paling cepat
-- Tidak depend ke external service
-- Full control
-
-**Setup:**
-```bash
-# Install Supabase client
-npm install @supabase/supabase-js
-
-# Buat scraper script
-node scripts/scrape-yufid.js
-```
-
-## Kustomisasi
-
-### Ubah Prompt AI
-
-Edit di `app/api/chat/route.js` bagian prompt untuk mengubah gaya jawaban AI.
-
-### Ubah Keywords Filter
-
-Edit array `religiousKeywords` di fungsi `isReligiousQuestion()` untuk menambah/kurangi keyword deteksi.
-
-### Styling
-
-Edit komponen React dengan class Tailwind CSS sesuai selera.
-
-## Deploy
-
-### Deploy ke Vercel
-
-## 🚀 Quick Start (Tanpa Setup API)
-
-Untuk testing cepat tanpa perlu Google CSE API:
-
-```bash
-npm install
-npm run dev
-```
-
-Code akan otomatis fallback ke Google search scraping. Cukup set `GEMINI_API_KEY` saja.
-
-## ⚡ Cara Optimal (Setup Google CSE API)
-
-### Step 1: Gemini API Key
-
-1. Buka https://makersuite.google.com/app/apikey
-2. Login → Create API Key
-3. Copy ke `.env.local`:
-```bash
-GEMINI_API_KEY=your_gemini_api_key
-```
-
-### Step 2: Google Custom Search API (Opsional tapi Recommended)
-
-1. **Buat API Key:**
-   - Buka https://developers.google.com/custom-search/v1/introduction
-   - Klik "Get a Key" → Create new project
-   - Enable "Custom Search API"
-   - Copy API key
-
-2. **Dapatkan Yufid CSE ID:**
-   
-   **Cara 1: View Source**
-   - Buka https://yufid.com/result.html
-   - Klik kanan → View Page Source (Ctrl+U)
-   - Cari kata "cx" atau "cse_id"
-   - Contoh: `cx: '012345678901234567890:abcdefghijk'`
-   
-   **Cara 2: Network Tab**
-   - Buka yufid.com/result.html
-   - F12 → Network tab
-   - Search sesuatu
-   - Lihat request ke `cse.google.com`
-   - Parameter `cx` adalah CSE ID
-
-3. **Set Environment Variables:**
-```bash
-GOOGLE_CSE_API_KEY=your_google_cse_api_key
-YUFID_CSE_ID=yufid_cse_id
-```
-
-### Step 3: Test Search
-
-```bash
-# Test search functionality
-node scripts/test-search.js
-```
-
-## 📝 Troubleshooting
-
-### Problem: "Tidak menemukan artikel di yufid.com"
-
-**Penyebab:**
-- Google search scraping kena rate limit
-- Struktur HTML Google berubah
-- Yufid CSE tidak mereturn hasil
-
-**Solusi:**
-
-1. **Setup Google CSE API** (recommended)
-2. **Gunakan Puppeteer** untuk render JavaScript:
-   ```bash
-   npm install puppeteer
-   ```
-   Lihat file `puppeteer-alternative.js` untuk implementasi
-
-3. **Build database lokal:**
-   ```bash
-   # Scrape semua artikel yufid sekali
-   node scripts/scrape-yufid.js
-   # Simpan ke Supabase/JSON file
-   ```
-
-### Problem: Search lambat
-
-- Set timeout lebih besar di `fetch()`
-- Gunakan caching (Redis/Vercel KV)
-- Build database lokal
-
-### Problem: Jawaban tidak akurat
-
-- Pastikan scraping berhasil (cek console log)
-- Improve prompt engineering di Gemini
-- Tambah artikel yang di-scrape (dari 3 ke 5)
-
-### Problem: Deploy ke Vercel gagal
-
-**Untuk Puppeteer di Vercel:**
-```bash
-npm install @sparticuz/chromium puppeteer-core
-```
-
-**vercel.json:**
-```json
-{
-  "functions": {
-    "app/api/chat/route.js": {
-      "memory": 3008,
-      "maxDuration": 30
-    }
-  }
-}
-```
-
-## Deploy
-
-### Vercel (Recommended)
-
-```bash
-npm install -g vercel
-vercel
-```
-
-Set environment variables di Vercel dashboard:
-- `GEMINI_API_KEY` (wajib)
-- `GOOGLE_CSE_API_KEY` (opsional)
-- `YUFID_CSE_ID` (opsional)
-
-### Railway
-
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
-
-# Login & deploy
-railway login
-railway init
-railway up
-```
-
-### Docker
-
-```dockerfile
-FROM node:18
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-```bash
-docker build -t islamic-chatbot .
-docker run -p 3000:3000 --env-file .env.local islamic-chatbot
-```
-
-## Lisensi
-
-MIT License - Bebas digunakan untuk project pribadi maupun komersial.
-
-## Kontribusi
-
-Pull requests welcome! Untuk perubahan besar, buka issue terlebih dahulu.
+# 🚀 Sahabat Ilmu - Enterprise AI Knowledge Platform
+
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=flat-square&logo=tailwind-css)
+![Drizzle ORM](https://img.shields.io/badge/Drizzle-ORM-C5F74F?style=flat-square)
+![NextAuth](https://img.shields.io/badge/NextAuth-v5-purple?style=flat-square)
+
+**Sahabat Ilmu** adalah platform pembelajaran modern berbasis AI yang dirancang untuk membantu pengguna menemukan jawaban seputar ilmu, kajian, dan pembelajaran dengan cepat, tepercaya, dan terstruktur. Dibangun dengan Next.js 16, Drizzle ORM, NextAuth v5, dan Gemini AI—platform ini siap production dengan fitur authentication, admin dashboard, content management, dan AI assistant yang powerful.
 
 ---
 
-**Catatan:** Project ini dibuat untuk tujuan edukasi. Pastikan mematuhi Terms of Service yufid.com dan Google dalam penggunaan production.
+## 📑 Table of Contents
+
+- [Core Features](#-core-features)
+- [Tech Stack](#️-tech-stack)
+- [Project Structure](#-project-structure)
+- [Getting Started](#-getting-started)
+- [Environment Variables](#-environment-variables)
+- [API Documentation](#-api-documentation)
+- [Database Schema](#-database-schema)
+- [Authentication Flow](#-authentication-flow)
+- [Deployment](#-deployment)
+- [Roadmap](#️-roadmap)
+- [Contributing](#-contributing)
+
+---
+
+## ✨ Core Features
+
+### 🔐 Authentication System (NextAuth v5)
+- **Secure Authentication**: Login & Register dengan session handling
+- **Session Management**: Custom SessionProvider untuk client-side session
+- **Database Integration**: User data tersimpan dengan Drizzle ORM
+- **Route Protection**: Middleware protection untuk admin routes
+- **API Validation**: Server-side session validation
+
+**Key Files:**
+- `app/api/auth/[...nextauth]/route.ts`
+- `components/SessionProvider.tsx`
+- `lib/auth.ts`
+
+### 🤖 AI Chat Assistant (Gemini-Powered)
+- **Smart Responses**: Powered by Google Generative AI (Gemini)
+- **Web Scraping**: Integrasi Cheerio untuk parse HTML dari sumber terpercaya
+- **Custom Prompts**: Prompt engineering dengan `prompt.txt`
+- **Context-Aware**: AI dapat menjawab berdasarkan konten yang di-scrape
+- **Real-time API**: Fast response dengan Next.js API routes
+
+**Key Files:**
+- `app/api/chat/route.js`
+- `prompt.txt`
+
+### 📚 Kajian Content Management
+Sistem CRUD lengkap untuk mengelola konten kajian/artikel.
+
+**Features:**
+- Create, Read, Update, Delete kajian
+- Slug-based routing untuk SEO-friendly URLs
+- Rich Text Editor untuk konten formatting
+- Thumbnail upload support
+- Public viewer page untuk end-users
+- Admin management interface
+
+**API Endpoints:**
+- `POST /api/kajian` - Create kajian
+- `GET /api/kajian` - List all kajian
+- `GET /api/kajian/[id]` - Get kajian by ID
+- `GET /api/kajian/slug/[slug]` - Get kajian by slug
+- `PUT /api/kajian/[id]` - Update kajian
+- `DELETE /api/kajian/[id]` - Delete kajian
+
+**Key Files:**
+- `app/api/kajian/route.ts`
+- `app/api/kajian/[id]/route.ts`
+- `app/api/kajian/slug/[slug]/route.ts`
+- `app/kajian/[slug]/page.tsx`
+
+### 🧑‍💼 Admin Dashboard
+Dashboard lengkap untuk content management dan user management.
+
+**Features:**
+- User management table
+- Kajian management interface
+- Upload file management
+- Rich text editor integration
+- Sidebar navigation
+- Stats & analytics (ready to extend)
+
+**Key Files:**
+- `app/dashboard/page.tsx`
+- `components/AdminTable.tsx`
+- `components/KajianSidebar.tsx`
+- `components/RichTextEditor.tsx`
+
+### 🗂️ File Upload System (UploadThing)
+Sistem upload file yang aman dan scalable.
+
+**Features:**
+- Image upload untuk thumbnails
+- File validation & sanitization
+- CDN integration via UploadThing
+- Secure API endpoints
+
+**Key Files:**
+- `app/api/uploadthing/core.ts`
+- `app/api/uploadthing/route.ts`
+- `lib/uploadthing.ts`
+
+### 🧩 User Registration System
+Complete registration flow dengan validasi.
+
+**Features:**
+- Custom registration form
+- Server-side validation
+- Password hashing
+- Auto database entry via Drizzle
+
+**Key Files:**
+- `app/api/register/route.ts`
+- `app/register/page.tsx`
+
+### 🔎 Public Kajian Viewer
+Halaman public untuk menampilkan konten kajian.
+
+**Features:**
+- SEO-optimized pages
+- Clean typography
+- Responsive design
+- Dynamic routing dengan slug
+
+**Key Files:**
+- `app/kajian/[slug]/page.tsx`
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend & Backend
+- **Next.js 16** - React framework dengan Turbopack
+- **React 19** - Server Components & Client Components
+- **TypeScript** - Type-safe development
+
+### Authentication & Security
+- **NextAuth v5** - Modern authentication library
+- **Middleware** - Route protection & session validation
+
+### Database & ORM
+- **Drizzle ORM** - Type-safe SQL toolkit
+- **PostgreSQL/MySQL** - Production-grade database
+- **SQL Migrations** - Version-controlled schema changes
+
+### Styling & UI
+- **Tailwind CSS** - Utility-first CSS framework
+- **PostCSS** - CSS processing
+- **Custom Components** - Modular UI architecture
+
+### AI & External Services
+- **Google Generative AI** - Gemini API for chat
+- **Cheerio** - HTML parsing & web scraping
+- **UploadThing** - File upload service
+
+### Development Tools
+- **Turbopack** - Fast build tool
+- **ESLint** - Code linting
+- **TypeScript** - Static type checking
+
+---
+
+## 📂 Project Structure
+
+```
+sahabat-ilmu/
+│
+├── app/
+│   ├── api/
+│   │   ├── admin_users/
+│   │   │   └── route.ts              # Admin user management
+│   │   ├── auth/
+│   │   │   └── [...nextauth]/
+│   │   │       └── route.ts          # NextAuth handler
+│   │   ├── chat/
+│   │   │   └── route.js              # AI chat endpoint
+│   │   ├── kajian/
+│   │   │   ├── route.ts              # CRUD kajian
+│   │   │   ├── [id]/
+│   │   │   │   └── route.ts          # Get/Update/Delete by ID
+│   │   │   └── slug/[slug]/
+│   │   │       └── route.ts          # Get by slug
+│   │   ├── register/
+│   │   │   └── route.ts              # User registration
+│   │   └── uploadthing/
+│   │       ├── core.ts               # Upload config
+│   │       └── route.ts              # Upload handler
+│   │
+│   ├── dashboard/
+│   │   └── page.tsx                  # Admin dashboard
+│   │
+│   ├── kajian/
+│   │   └── [slug]/
+│   │       └── page.tsx              # Public kajian viewer
+│   │
+│   ├── login/
+│   │   └── page.tsx                  # Login page
+│   │
+│   ├── register/
+│   │   └── page.tsx                  # Registration page
+│   │
+│   ├── layout.tsx                    # Root layout
+│   ├── page.js                       # Home page
+│   └── globals.css                   # Global styles
+│
+├── components/
+│   ├── AdminTable.tsx                # Admin data table
+│   ├── KajianSidebar.tsx             # Dashboard sidebar
+│   ├── RichTextEditor.tsx            # Content editor
+│   └── SessionProvider.tsx           # Auth session wrapper
+│
+├── db/
+│   ├── index.ts                      # Database connection
+│   └── schema.ts                     # Drizzle schema definitions
+│
+├── drizzle/
+│   └── migrations/                   # Database migrations
+│
+├── lib/
+│   ├── auth.ts                       # NextAuth config
+│   └── uploadthing.ts                # Upload utilities
+│
+├── public/
+│   ├── images/
+│   │   ├── file.svg
+│   │   ├── globe.svg
+│   │   ├── next.svg
+│   │   ├── vercel.svg
+│   │   └── window.svg
+│   ├── favicon.ico
+│   └── manifest.json
+│
+├── scripts/
+│   └── seed-super-admin.ts           # Admin seeder script
+│
+├── prompt.txt                        # AI system prompt
+├── next.config.ts                    # Next.js config
+├── drizzle.config.ts                 # Drizzle config
+├── tailwind.config.ts                # Tailwind config
+├── tsconfig.json                     # TypeScript config
+└── package.json
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- **Node.js** 18.x or higher
+- **npm** or **yarn** or **pnpm**
+- **PostgreSQL** or **MySQL** database
+- **UploadThing** account (for file uploads)
+- **Google AI API Key** (for Gemini)
+
+### Installation Steps
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/yourusername/sahabat-ilmu.git
+cd sahabat-ilmu
+```
+
+2. **Install dependencies**
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+3. **Setup environment variables**
+
+Create `.env.local` file:
+
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/sahabat_ilmu"
+
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-nextauth-secret-key-here"
+
+# Google Generative AI
+GEMINI_API_KEY="your-gemini-api-key"
+
+# UploadThing
+UPLOADTHING_SECRET="your-uploadthing-secret"
+UPLOADTHING_APP_ID="your-uploadthing-app-id"
+
+# Optional
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+4. **Generate database migrations**
+```bash
+npm run db:generate
+```
+
+5. **Run migrations**
+```bash
+npm run db:migrate
+# or
+npx drizzle-kit migrate
+```
+
+6. **Seed super admin (optional)**
+```bash
+npm run seed:admin
+# or
+npx tsx scripts/seed-super-admin.ts
+```
+
+7. **Start development server**
+```bash
+npm run dev
+```
+
+8. **Open browser**
+Navigate to [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 🔧 Available Scripts
+
+```bash
+# Development
+npm run dev              # Start dev server (Turbopack)
+npm run build            # Build for production
+npm run start            # Start production server
+npm run lint             # Run ESLint
+
+# Database
+npm run db:generate      # Generate migrations
+npm run db:migrate       # Run migrations
+npm run db:push          # Push schema changes
+npm run db:studio        # Open Drizzle Studio
+
+# Seeding
+npm run seed:admin       # Seed super admin user
+
+# Type Checking
+npm run type-check       # TypeScript validation
+```
+
+---
+
+## 🌍 Environment Variables
+
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `DATABASE_URL` | PostgreSQL/MySQL connection string | ✅ | `postgresql://user:pass@localhost:5432/db` |
+| `NEXTAUTH_URL` | App URL for NextAuth | ✅ | `http://localhost:3000` |
+| `NEXTAUTH_SECRET` | Secret key for NextAuth | ✅ | Generate with `openssl rand -base64 32` |
+| `GEMINI_API_KEY` | Google AI API key | ✅ | `AIza...` |
+| `UPLOADTHING_SECRET` | UploadThing secret key | ✅ | Get from uploadthing.com |
+| `UPLOADTHING_APP_ID` | UploadThing app ID | ✅ | Get from uploadthing.com |
+| `NEXT_PUBLIC_APP_URL` | Public app URL | ❌ | `https://sahabatilmu.com` |
+
+---
+
+## 📡 API Documentation
+
+### Authentication Endpoints
+
+#### POST `/api/auth/signin`
+Login user dengan credentials.
+
+#### POST `/api/register`
+Register user baru.
+
+**Request Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "securepassword123"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "User registered successfully",
+  "userId": "user_123"
+}
+```
+
+### Kajian Endpoints
+
+#### GET `/api/kajian`
+Get all kajian (with optional filters).
+
+**Query Parameters:**
+- `limit` - Number of results (default: 10)
+- `offset` - Pagination offset
+- `search` - Search query
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "kajian_1",
+      "title": "Tauhid dalam Islam",
+      "slug": "tauhid-dalam-islam",
+      "excerpt": "Penjelasan lengkap...",
+      "thumbnail": "https://...",
+      "createdAt": "2024-11-25T10:00:00Z"
+    }
+  ],
+  "total": 42,
+  "hasMore": true
+}
+```
+
+#### POST `/api/kajian`
+Create new kajian (Admin only).
+
+**Request Body:**
+```json
+{
+  "title": "Tauhid dalam Islam",
+  "slug": "tauhid-dalam-islam",
+  "content": "<p>Konten lengkap...</p>",
+  "excerpt": "Penjelasan singkat",
+  "thumbnail": "https://..."
+}
+```
+
+#### GET `/api/kajian/slug/[slug]`
+Get kajian by slug (public).
+
+#### PUT `/api/kajian/[id]`
+Update kajian by ID (Admin only).
+
+#### DELETE `/api/kajian/[id]`
+Delete kajian by ID (Admin only).
+
+### Chat Endpoint
+
+#### POST `/api/chat`
+Send message to AI assistant.
+
+**Request Body:**
+```json
+{
+  "message": "Apa itu tauhid?",
+  "context": "optional context"
+}
+```
+
+**Response:**
+```json
+{
+  "response": "Tauhid adalah keyakinan...",
+  "sources": ["https://example.com/source"],
+  "timestamp": "2024-11-25T10:30:00Z"
+}
+```
+
+### Upload Endpoint
+
+#### POST `/api/uploadthing`
+Upload file (authenticated users only).
+
+---
+
+## 🗄️ Database Schema
+
+Key tables in Drizzle schema (`db/schema.ts`):
+
+### Users Table
+```typescript
+{
+  id: string (primary key)
+  name: string
+  email: string (unique)
+  password: string (hashed)
+  role: enum ('admin', 'user')
+  createdAt: timestamp
+  updatedAt: timestamp
+}
+```
+
+### Kajian Table
+```typescript
+{
+  id: string (primary key)
+  title: string
+  slug: string (unique)
+  content: text
+  excerpt: string
+  thumbnail: string (nullable)
+  authorId: string (foreign key -> users)
+  published: boolean
+  createdAt: timestamp
+  updatedAt: timestamp
+}
+```
+
+### Sessions Table (NextAuth)
+```typescript
+{
+  sessionToken: string (primary key)
+  userId: string (foreign key)
+  expires: timestamp
+}
+```
+
+---
+
+## 🔐 Authentication Flow
+
+### Registration Flow
+1. User fills registration form
+2. POST to `/api/register`
+3. Server validates input
+4. Password hashed with bcrypt
+5. User created in database
+6. Redirect to login
+
+### Login Flow
+1. User submits credentials
+2. NextAuth validates against database
+3. Session created
+4. Session token stored
+5. Client receives session cookie
+6. Protected routes accessible
+
+### Protected Routes
+- `/dashboard/*` - Admin only
+- `/api/kajian` (POST/PUT/DELETE) - Admin only
+- `/api/admin_users` - Admin only
+
+---
+
+## 🚀 Deployment
+
+### Deploy to Vercel
+
+1. **Push to GitHub**
+```bash
+git push origin main
+```
+
+2. **Import to Vercel**
+- Go to [vercel.com](https://vercel.com)
+- Import your repository
+- Add environment variables
+- Deploy
+
+3. **Set up database**
+- Use Vercel Postgres or external database
+- Run migrations in production
+
+### Deploy to VPS (Ubuntu)
+
+```bash
+# Install Node.js
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Clone and setup
+git clone https://github.com/yourusername/sahabat-ilmu.git
+cd sahabat-ilmu
+npm install
+npm run build
+
+# Setup PM2
+npm install -g pm2
+pm2 start npm --name "sahabat-ilmu" -- start
+pm2 save
+pm2 startup
+
+# Setup Nginx reverse proxy
+# ... (configure Nginx)
+```
+
+---
+
+## 🗺️ Roadmap
+
+### Phase 1: Core Features ✅
+- [x] Authentication system
+- [x] Admin dashboard
+- [x] Kajian CRUD
+- [x] AI chat assistant
+- [x] File upload
+
+### Phase 2: Enhanced Features 🚧
+- [ ] Comment system untuk kajian
+- [ ] Full CRUD admin UI for kajian management
+- [ ] AI chat upgrade (context-aware memory)
+- [ ] Search functionality dengan filters
+- [ ] Bookmark/favorite system
+
+### Phase 3: Advanced Features 📋
+- [ ] Analytics dashboard
+- [ ] Role-based access control (Admin/Editor/Viewer)
+- [ ] Multi-language support
+- [ ] Mobile app (React Native)
+- [ ] Email notifications
+- [ ] Advanced SEO optimization
+
+### Phase 4: Scale & Optimize 🎯
+- [ ] Rate limiting & API throttling
+- [ ] Response caching (Redis)
+- [ ] CDN integration
+- [ ] Performance monitoring
+- [ ] A/B testing framework
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these guidelines:
+
+### Development Workflow
+
+1. **Fork the repository**
+2. **Create feature branch**
+```bash
+git checkout -b feature/amazing-feature
+```
+
+3. **Make changes**
+- Write clean, typed code
+- Follow existing code style
+- Add tests if applicable
+
+4. **Commit changes**
+```bash
+git commit -m "feat: add amazing feature"
+```
+
+5. **Push to branch**
+```bash
+git push origin feature/amazing-feature
+```
+
+6. **Open Pull Request**
+
+### Code Style Guidelines
+- Use TypeScript for all new files
+- Follow ESLint configuration
+- Use meaningful variable/function names
+- Add JSDoc comments for functions
+- Keep functions small and focused
+
+### Commit Message Convention
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation changes
+- `style:` Code style changes
+- `refactor:` Code refactoring
+- `test:` Test updates
+- `chore:` Build/config updates
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 👥 Team
+
+- **Lead Developer** - [Your Name](https://github.com/yourusername)
+- **UI/UX Designer** - [Designer Name](https://github.com/designer)
+- **AI Engineer** - [AI Engineer Name](https://github.com/aiengineer)
+
+---
+
+## 🙏 Acknowledgments
+
+- [Next.js Team](https://nextjs.org) - Amazing React framework
+- [Drizzle Team](https://orm.drizzle.team) - Excellent ORM
+- [NextAuth Team](https://next-auth.js.org) - Auth made easy
+- [Google AI](https://ai.google.dev) - Gemini API
+- [UploadThing](https://uploadthing.com) - File upload service
+- Open Source Community ❤️
+
+---
+
+## 🐛 Known Issues
+
+1. **Middleware Deprecation**: Next.js 16 middleware needs migration to proxy router
+2. **File Upload Limits**: Current limit is 4MB per file
+3. **AI Context Window**: Limited to recent conversation history
+
+For bug reports, please [open an issue](https://github.com/yourusername/sahabat-ilmu/issues).
+
+---
+
+## 📞 Support
+
+- **Email**: support@sahabatilmu.com
+- **Discord**: [Join our server](https://discord.gg/sahabatilmu)
+- **Documentation**: [docs.sahabatilmu.com](https://docs.sahabatilmu.com)
+- **Forum**: [forum.sahabatilmu.com](https://forum.sahabatilmu.com)
+
+---
+
+## 🔗 Links
+
+- **Website**: [sahabatilmu.com](https://sahabatilmu.com)
+- **API Docs**: [api.sahabatilmu.com/docs](https://api.sahabatilmu.com/docs)
+- **Blog**: [blog.sahabatilmu.com](https://blog.sahabatilmu.com)
+- **Status Page**: [status.sahabatilmu.com](https://status.sahabatilmu.com)
+
+---
+
+<div align="center">
+
+**Built with ❤️ by the Sahabat Ilmu Team**
+
+[![Twitter Follow](https://img.shields.io/twitter/follow/sahabatilmu?style=social)](https://twitter.com/sahabatilmu)
+[![GitHub stars](https://img.shields.io/github/stars/yourusername/sahabat-ilmu?style=social)](https://github.com/yourusername/sahabat-ilmu)
+
+[⬆ Back to top](#-sahabat-ilmu---enterprise-ai-knowledge-platform)
+
+</div>

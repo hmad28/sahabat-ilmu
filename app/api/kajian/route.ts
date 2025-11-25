@@ -1,83 +1,124 @@
-import { NextResponse } from "next/server";
+// src/app/api/kajian/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
-import { kajian } from "@/db/schema";
+import { kajian, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-// import { and } from "drizzle-orm/expressions";
 
-// GET all kajian
-// GET all kajian
-// GET all kajian
-export async function GET(request: Request) {
+// GET - Fetch all kajian (with author info)
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get("status") || "published";
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get("status");
 
-    const baseQuery = db.select().from(kajian).orderBy(desc(kajian.createdAt));
+    let query = db
+      .select({
+        id: kajian.id,
+        title: kajian.title,
+        slug: kajian.slug,
+        excerpt: kajian.excerpt,
+        content: kajian.content,
+        coverImage: kajian.coverImage,
+        gallery: kajian.gallery,
+        ustadz: kajian.ustadz,
+        location: kajian.location,
+        date: kajian.date,
+        category: kajian.category,
+        status: kajian.status,
+        createdAt: kajian.createdAt,
+        authorId: kajian.authorId,
+        author: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+        },
+      })
+      .from(kajian)
+      .leftJoin(users, eq(kajian.authorId, users.id))
+      .orderBy(desc(kajian.createdAt));
 
-    // Jangan mutate — build query baru
-    const finalQuery =
-      status === "all" ? baseQuery : baseQuery.where(eq(kajian.status, status));
+    // Filter by status if provided
+    if (status && status !== "all") {
+      query = query.where(eq(kajian.status, status));
+    }
 
-    const allKajian = await finalQuery;
+    const result = await query;
 
-    return NextResponse.json(allKajian);
-  } catch (error) {
-    console.error("Error creating kajian:", error);
-
-    const errMsg = error instanceof Error ? error.message : String(error);
-
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error("GET kajian error:", error);
     return NextResponse.json(
-      { error: "Failed to create kajian", details: errMsg },
+      { error: "Failed to fetch kajian", details: error.message },
       { status: 500 }
     );
   }
-
 }
 
-
-// POST create kajian
-// POST create kajian
-export async function POST(request: Request) {
+// POST - Create new kajian (requires auth)
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json();
+    const session = await getServerSession(authOptions);
 
-    // Generate slug from title
-    const slug = body.title
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const {
+      title,
+      excerpt,
+      content,
+      coverImage,
+      gallery,
+      ustadz,
+      location,
+      date,
+      category,
+      status,
+    } = body;
+
+    if (!title || !excerpt || !content) {
+      return NextResponse.json(
+        { error: "Title, excerpt, and content are required" },
+        { status: 400 }
+      );
+    }
+
+    // Generate slug
+    const slug = title
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
 
-    // Handle empty date - convert empty string to null
-    const dateValue =
-      body.date && body.date.trim() !== "" ? new Date(body.date) : null;
+    // Insert with authorId from session
+    const [newKajian] = await db
+      .insert(kajian)
+      .values({
+        title,
+        slug,
+        excerpt,
+        content,
+        coverImage: coverImage || null,
+        gallery: gallery || [],
+        ustadz: ustadz || null,
+        location: location || null,
+        date: date ? new Date(date) : null,
+        category: category || "kajian",
+        status: status || "published",
+        authorId: session.user.id,
+      })
+      .returning();
 
-    // Prepare data
-    const kajianData = {
-      title: body.title,
-      slug,
-      excerpt: body.excerpt,
-      content: body.content,
-      coverImage: body.coverImage || null,
-      gallery: body.gallery || [],
-      ustadz: body.ustadz || null,
-      location: body.location || null,
-      date: dateValue,
-      category: body.category || "kajian",
-      status: body.status || "published",
-    };
-
-    const [newKajian] = await db.insert(kajian).values(kajianData).returning();
-
-    return NextResponse.json(newKajian);
-  } catch (error) {
-    console.error("Error creating kajian:", error);
-
-    const errMsg = error instanceof Error ? error.message : "Unknown error";
-
+    return NextResponse.json(newKajian, { status: 201 });
+  } catch (error: any) {
+    console.error("POST kajian error:", error);
     return NextResponse.json(
-      { error: "Failed to create kajian", details: errMsg },
+      { error: "Failed to create kajian", details: error.message },
       { status: 500 }
     );
   }
 }
-

@@ -107,6 +107,7 @@ export default function KajianSidebar() {
                       </span>
                     </div>
                   )}
+                  
                   {kajian.date && (
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />

@@ -1,12 +1,31 @@
+// src/db/schema.ts
+
 import {
   pgTable,
   serial,
+  varchar,
   text,
   timestamp,
-  varchar,
   json,
+  pgEnum,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
+// Enum untuk role user
+export const roleEnum = pgEnum("role", ["SUPER_ADMIN", "AUTHOR"]);
+
+// Tabel Users
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  password: varchar("password", { length: 255 }).notNull(),
+  role: roleEnum("role").default("AUTHOR").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Tabel Kajian (Updated dengan authorId)
 export const kajian = pgTable("kajian", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
@@ -19,7 +38,28 @@ export const kajian = pgTable("kajian", {
   location: varchar("location", { length: 100 }),
   date: timestamp("date"),
   category: varchar("category", { length: 50 }).default("kajian"),
-  status: varchar("status", { length: 20 }).default("published"), // draft, published
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  status: varchar("status", { length: 20 }).default("published"),
+  authorId: serial("author_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  kajians: many(kajian),
+}));
+
+export const kajianRelations = relations(kajian, ({ one }) => ({
+  author: one(users, {
+    fields: [kajian.authorId],
+    references: [users.id],
+  }),
+}));
+
+// Types
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Kajian = typeof kajian.$inferSelect;
+export type NewKajian = typeof kajian.$inferInsert;

@@ -9,12 +9,14 @@ import {
   User,
   Loader2,
   BookOpen,
-  AlertCircle,
   Menu,
   X,
+  MessageSquareText,
 } from "lucide-react";
 import Image from "next/image";
 import KajianSidebar from "@/components/KajianSidebar";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 // Component untuk format pesan dengan styling khusus
 function FormattedMessage({ content }) {
@@ -116,6 +118,7 @@ export default function IslamicChatbot() {
   const [loading, setLoading] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const messagesEndRef = useRef(null);
+  const { data: session } = useSession();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -191,7 +194,7 @@ export default function IslamicChatbot() {
       <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-3 md:p-4 shadow-lg">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl md:text-2xl font-bold">
+            <Link href="/" className="text-xl md:text-2xl font-bold">
               <Image
                 src="/images/sahabat-ilmu-vertikal2.png"
                 alt="Logo"
@@ -199,14 +202,36 @@ export default function IslamicChatbot() {
                 height={40}
                 className="inline-block md:w-[200px]"
               />
-            </h1>
-            <button
-              onClick={() => setShowSidebar(!showSidebar)}
-              className="lg:hidden bg-white/20 text-xs px-3 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center gap-1.5"
-            >
-              <Menu className="w-4 h-4" />
-              <span className="hidden sm:inline">Kajian</span>
-            </button>
+            </Link>
+            <div className="flex items-center gap-2">
+              {!session && (
+                <a
+                  href="/register"
+                  className="hidden sm:flex bg-white text-emerald-600 text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-lg hover:bg-white/90 transition-all items-center gap-1.5 shadow-md"
+                >
+                  <User className="w-4 h-4" />
+                  <span>Daftar Jadi Penulis</span>
+                </a>
+              )}
+              
+              {session && (
+                <a
+                  href="/dashboard"
+                  className="hidden sm:flex bg-white text-emerald-600 text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-lg hover:bg-white/90 transition-all items-center gap-1.5 shadow-md"
+                >
+                  <User className="w-4 h-4" />
+                  <span>Dashboard</span>
+                </a>
+              )}
+  
+              <button
+                onClick={() => setShowSidebar(!showSidebar)}
+                className="lg:hidden bg-white/20 text-xs px-3 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center gap-1.5"
+              >
+                <Menu className="w-4 h-4" />
+                <span className="hidden sm:inline">Kajian</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -240,9 +265,11 @@ export default function IslamicChatbot() {
                       <button
                         key={i}
                         onClick={() => setInput(q)}
-                        className="p-2.5 md:p-3 bg-white rounded-lg shadow hover:shadow-md transition-all text-left text-xs md:text-sm text-gray-700 hover:bg-emerald-50 hover:border-emerald-200 border border-transparent"
+                        className="p-2.5 md:p-3 bg-white rounded-lg shadow hover:shadow-md transition-all text-left text-xs md:text-sm text-gray-700 hover:bg-emerald-50 hover:border-emerald-200 border border-transparent flex items-center gap-1"
                       >
-                        <span className="mr-1">💬</span>
+                        <span className="mr-1">
+                          <MessageSquareText className="w-4 h-4" />
+                        </span>
                         <span>{q}</span>
                       </button>
                     ))}
@@ -260,6 +287,7 @@ export default function IslamicChatbot() {
                   {msg.role === "assistant" && (
                     <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
                       <Bot className="w-4 h-4 md:w-5 md:h-5 text-white" />
+
                     </div>
                   )}
 
@@ -392,6 +420,28 @@ export default function IslamicChatbot() {
                 >
                   <X className="w-5 h-5" />
                 </button>
+              </div>
+
+              <div className="w-full pt-4 px-4">
+                {!session && (
+                  <a
+                    href="/register"
+                    className="flex bg-emerald-600 text-white text-sm md:text-sm font-semibold px-3 py-3 rounded-lg hover:bg-emerald-600/90 transition-all items-center gap-1.5 shadow-md"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Daftar Jadi Penulis</span>
+                  </a>
+                )}
+                
+                {session && (
+                  <a
+                    href="/dashboard"
+                    className="flex bg-emerald-600 text-white text-sm md:text-sm font-semibold px-3 py-3 rounded-lg hover:bg-emerald-600/90 transition-all items-center gap-1.5 shadow-md"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Dashboard</span>
+                  </a>
+                )}
               </div>
               <div className="flex-1 overflow-y-auto p-4">
                 <KajianSidebar />

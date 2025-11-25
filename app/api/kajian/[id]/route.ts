@@ -1,115 +1,144 @@
-import { NextResponse } from "next/server";
+// src/app/api/kajian/[id]/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
 import { kajian } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-// GET single kajian by ID
-export async function GET(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
+// PUT - Update kajian (requires auth + ownership or super admin)
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params;
-    const kajianId = parseInt(id);
+    const session = await getServerSession(authOptions);
 
-    const [foundKajian] = await db
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const id = parseInt(params.id);
+    const body = await req.json();
+
+    // Check if kajian exists
+    const [existingKajian] = await db
       .select()
       .from(kajian)
-      .where(eq(kajian.id, kajianId))
+      .where(eq(kajian.id, id))
       .limit(1);
 
-    if (!foundKajian) {
+    if (!existingKajian) {
       return NextResponse.json({ error: "Kajian not found" }, { status: 404 });
     }
 
-    return NextResponse.json(foundKajian);
-  } catch (error) {
-    console.error("Error fetching kajian:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch kajian" },
-      { status: 500 }
-    );
-  }
-}
+    // Check permission: Super Admin can edit all, Author can only edit their own
+    const isSuperAdmin = session.user.role === "SUPER_ADMIN";
+    const isOwner = existingKajian.authorId === session.user.id;
 
-// PUT update kajian
-export async function PUT(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await context.params;
-    const kajianId = parseInt(id);
-    const body = await request.json();
+    if (!isSuperAdmin && !isOwner) {
+      return NextResponse.json(
+        { error: "Forbidden: You can only edit your own kajian" },
+        { status: 403 }
+      );
+    }
+
+    const {
+      title,
+      excerpt,
+      content,
+      coverImage,
+      gallery,
+      ustadz,
+      location,
+      date,
+      category,
+      status,
+    } = body;
 
     // Generate slug if title changed
-    const slug = body.title
+    const slug = title
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
 
-    // Handle date
-    const dateValue =
-      body.date && body.date.trim() !== "" ? new Date(body.date) : null;
-
-    const kajianData = {
-      title: body.title,
-      slug,
-      excerpt: body.excerpt,
-      content: body.content,
-      coverImage: body.coverImage || null,
-      gallery: body.gallery || [],
-      ustadz: body.ustadz || null,
-      location: body.location || null,
-      date: dateValue,
-      category: body.category || "kajian",
-      status: body.status || "published",
-      updatedAt: new Date(),
-    };
-
+    // Update kajian
     const [updatedKajian] = await db
       .update(kajian)
-      .set(kajianData)
-      .where(eq(kajian.id, kajianId))
+      .set({
+        title,
+        slug,
+        excerpt,
+        content,
+        coverImage: coverImage || null,
+        gallery: gallery || [],
+        ustadz: ustadz || null,
+        location: location || null,
+        date: date ? new Date(date) : null,
+        category: category || "kajian",
+        status: status || "published",
+        updatedAt: new Date(),
+      })
+      .where(eq(kajian.id, id))
       .returning();
 
-    if (!updatedKajian) {
-      return NextResponse.json({ error: "Kajian not found" }, { status: 404 });
-    }
-
     return NextResponse.json(updatedKajian);
-  } catch (error) {
-    console.error("Error updating kajian:", error);
+  } catch (error: any) {
+    console.error("PUT kajian error:", error);
     return NextResponse.json(
-      { error: "Failed to update kajian" },
+      { error: "Failed to update kajian", details: error.message },
       { status: 500 }
     );
   }
 }
 
-// DELETE kajian
+// DELETE - Delete kajian (requires auth + ownership or super admin)
 export async function DELETE(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
+  req: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params;
-    const kajianId = parseInt(id);
+    const session = await getServerSession(authOptions);
 
-    const [deletedKajian] = await db
-      .delete(kajian)
-      .where(eq(kajian.id, kajianId))
-      .returning();
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!deletedKajian) {
+    const id = parseInt(params.id);
+
+    // Check if kajian exists
+    const [existingKajian] = await db
+      .select()
+      .from(kajian)
+      .where(eq(kajian.id, id))
+      .limit(1);
+
+    if (!existingKajian) {
       return NextResponse.json({ error: "Kajian not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, deletedKajian });
-  } catch (error) {
-    console.error("Error deleting kajian:", error);
+    // Check permission: Super Admin can delete all, Author can only delete their own
+    const isSuperAdmin = session.user.role === "SUPER_ADMIN";
+    const isOwner = existingKajian.authorId === session.user.id;
+
+    if (!isSuperAdmin && !isOwner) {
+      return NextResponse.json(
+        { error: "Forbidden: You can only delete your own kajian" },
+        { status: 403 }
+      );
+    }
+
+    // Delete kajian
+    await db.delete(kajian).where(eq(kajian.id, id));
+
+    return NextResponse.json({ message: "Kajian deleted successfully" });
+  } catch (error: any) {
+    console.error("DELETE kajian error:", error);
     return NextResponse.json(
-      { error: "Failed to delete kajian" },
+      { error: "Failed to delete kajian", details: error.message },
       { status: 500 }
     );
   }

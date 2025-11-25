@@ -81,7 +81,7 @@ export const metadata: Metadata = {
       "Platform pembelajaran Islam modern berbasis AI. Tanya jawab seputar kajian Islam, ilmu agama, dan belajar dengan chatbot AI Islami yang terpercaya.",
     images: [
       {
-        url: "/public/images/1200x630-sahabat-ilmu.png",
+        url: "https://ibb.co.com/zTwMxrm8",
         width: 1200,
         height: 630,
         alt: "Sahabat Ilmu - Platform Pembelajaran Islam",
@@ -96,7 +96,7 @@ export const metadata: Metadata = {
     title: "Sahabat Ilmu - Platform Pembelajaran Islam Berbasis AI",
     description:
       "Platform pembelajaran Islam modern berbasis AI. Tanya jawab seputar kajian Islam dengan chatbot AI Islami yang terpercaya.",
-    images: ["/images/1200x630-sahabat-ilmu.png"],
+    images: ["https://ibb.co.com/zTwMxrm8"],
     creator: "@sahabatilmu",
     site: "@sahabatilmu",
   },
@@ -137,18 +137,22 @@ export const metadata: Metadata = {
     icon: [
       { url: "/app/favicon.ico" },
       {
-        url: "/images/16x16-icon-sahabat-ilmu.png",
+        url: "https://ibb.co.com/0RXrm4Lv",
         sizes: "16x16",
         type: "image/png",
       },
       {
-        url: "/images/32x32-icon-sahabat-ilmu.png",
+        url: "https://ibb.co.com/F4dtRT83",
         sizes: "32x32",
         type: "image/png",
       },
     ],
     apple: [
-      { url: "/images/180x180-sahabat-ilmu.png", sizes: "180x180", type: "image/png" },
+      {
+        url: "https://ibb.co.com/93Tmygr4",
+        sizes: "180x180",
+        type: "image/png",
+      },
     ],
     other: [
       {

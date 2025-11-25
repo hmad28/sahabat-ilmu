@@ -1,3 +1,5 @@
+// app/page.js
+
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -185,9 +187,9 @@ export default function IslamicChatbot() {
             </h1>
             <button
               onClick={() => setShowSidebar(!showSidebar)}
-              className="lg:hidden bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition-colors"
+              className="lg:hidden bg-white/20 text-xs px-2 py-1 rounded-lg hover:bg-white/30 transition-colors"
             >
-              {showSidebar ? "Sembunyikan" : "Tampilkan"} Kajian
+              {showSidebar ? "Sembunyikan" : "Lihat"} Kajian
             </button>
           </div>
         </div>
@@ -359,7 +361,7 @@ export default function IslamicChatbot() {
       {showSidebar && (
         <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40">
           <div className="absolute right-0 top-0 h-full w-80 bg-white shadow-xl p-4 overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-4 text-gray-900">
               <h3 className="font-bold text-lg">Kajian</h3>
               <button
                 onClick={() => setShowSidebar(false)}

@@ -186,6 +186,32 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
+        <meta
+          property="og:title"
+          content="Sahabat Ilmu - Platform Pembelajaran Islam Berbasis AI"
+        />
+        <meta
+          property="og:description"
+          content="Platform pembelajaran Islam modern berbasis AI. Tanya jawab seputar kajian Islam, ilmu agama, dan belajar dengan chatbot AI Islami yang terpercaya. Sumber ilmu Islam yang sahih dan mudah dipahami."
+        />
+        <meta property="og:image" content="images/1200x630-sahabat-ilmu.png" />
+        <meta property="og:url" content="https://sahabat-ilmu.vercel.app/" />
+
+        {/* <!-- Twitter --> */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content="Sahabat Ilmu - Platform Pembelajaran Islam Berbasis AI"
+        />
+        <meta
+          name="twitter:description"
+          content="Platform pembelajaran Islam modern berbasis AI. Tanya jawab seputar kajian Islam, ilmu agama, dan belajar dengan chatbot AI Islami yang terpercaya. Sumber ilmu Islam yang sahih dan mudah dipahami."
+        />
+        <meta
+          name="twitter:image"
+          content="images/1200x630-sahabat-ilmu.png"
+        />
+
         {/* Preconnect to external domains for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link

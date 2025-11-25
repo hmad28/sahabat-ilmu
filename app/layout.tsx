@@ -81,7 +81,7 @@ export const metadata: Metadata = {
       "Platform pembelajaran Islam modern berbasis AI. Tanya jawab seputar kajian Islam, ilmu agama, dan belajar dengan chatbot AI Islami yang terpercaya.",
     images: [
       {
-        url: "/public/images/",
+        url: "/public/images/1200x630-sahabat-ilmu.png",
         width: 1200,
         height: 630,
         alt: "Sahabat Ilmu - Platform Pembelajaran Islam",
@@ -96,7 +96,7 @@ export const metadata: Metadata = {
     title: "Sahabat Ilmu - Platform Pembelajaran Islam Berbasis AI",
     description:
       "Platform pembelajaran Islam modern berbasis AI. Tanya jawab seputar kajian Islam dengan chatbot AI Islami yang terpercaya.",
-    images: ["/public/images/"],
+    images: ["/images/1200x630-sahabat-ilmu.png"],
     creator: "@sahabatilmu",
     site: "@sahabatilmu",
   },
@@ -137,18 +137,18 @@ export const metadata: Metadata = {
     icon: [
       { url: "/app/favicon.ico" },
       {
-        url: "/public/images/16x16-icon-sahabat-ilmu.png",
+        url: "/images/16x16-icon-sahabat-ilmu.png",
         sizes: "16x16",
         type: "image/png",
       },
       {
-        url: "/public/images/32x32-icon-sahabat-ilmu.png",
+        url: "/images/32x32-icon-sahabat-ilmu.png",
         sizes: "32x32",
         type: "image/png",
       },
     ],
     apple: [
-      { url: "/public/images/180x180-sahabat-ilmu.png", sizes: "180x180", type: "image/png" },
+      { url: "/images/180x180-sahabat-ilmu.png", sizes: "180x180", type: "image/png" },
     ],
     other: [
       {
@@ -208,7 +208,7 @@ export default function RootLayout({
               description:
                 "Platform pembelajaran Islam modern berbasis AI dengan chatbot untuk tanya jawab kajian Islam",
               url: "https://sahabat-ilmu.vercel.app",
-              logo: "/public/images/sahabat-ilmu-horizontal2.png",
+              logo: "/images/sahabat-ilmu-horizontal2.png",
               // sameAs: [
               //   "https://www.facebook.com/sahabatilmu",
               //   "https://twitter.com/sahabatilmu",

@@ -24,3 +24,154 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Tiptap Editor - Better Text Visibility */
+.tiptap {
+  color: #1f2937; /* gray-800 */
+}
+
+/* Better paragraph spacing for article content */
+.prose p + p {
+  margin-top: 1.25em !important;
+}
+
+.prose p {
+  margin-bottom: 1.25em !important;
+}
+
+/* Tiptap output paragraph spacing */
+.tiptap p + p {
+  margin-top: 1.25em;
+}
+
+.tiptap p {
+  margin-bottom: 1.25em;
+}
+
+/* Ensure line breaks are visible */
+.prose br {
+  content: "";
+  display: block;
+  margin: 0.5em 0;
+}
+
+.tiptap h1,
+.tiptap h2,
+.tiptap h3 {
+  color: #111827; /* gray-900 */
+  font-weight: bold;
+}
+
+.tiptap h1 {
+  font-size: 2em;
+  margin: 0.67em 0;
+}
+
+.tiptap h2 {
+  font-size: 1.5em;
+  margin: 0.75em 0;
+}
+
+.tiptap h3 {
+  font-size: 1.17em;
+  margin: 0.83em 0;
+}
+
+.tiptap ul,
+.tiptap ol {
+  padding-left: 2rem;
+  margin: 1em 0;
+  color: #1f2937;
+}
+
+.tiptap li {
+  color: #1f2937;
+  line-height: 1.75;
+}
+
+.tiptap ul {
+  list-style-type: disc;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+}
+
+.tiptap blockquote {
+  border-left: 4px solid #10b981; /* emerald-500 */
+  padding-left: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  margin: 1em 0;
+  background-color: #ecfdf5; /* emerald-50 */
+  color: #1f2937;
+  font-style: italic;
+}
+
+.tiptap code {
+  background-color: #f3f4f6;
+  color: #111827;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.tiptap a {
+  color: #10b981; /* emerald-500 */
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tiptap a:hover {
+  color: #059669; /* emerald-600 */
+}
+
+.tiptap strong {
+  font-weight: bold;
+  color: #111827;
+}
+
+.tiptap em {
+  font-style: italic;
+  color: #1f2937;
+}
+
+.tiptap u {
+  text-decoration: underline;
+}
+
+.tiptap s {
+  text-decoration: line-through;
+}
+
+/* Prose styling override for better readability */
+.prose p,
+.prose li,
+.prose td,
+.prose th {
+  color: #1f2937 !important;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: #111827 !important;
+  font-weight: 700 !important;
+}
+
+.prose strong {
+  color: #111827 !important;
+  font-weight: 700 !important;
+}
+
+.prose a {
+  color: #10b981 !important;
+}
+
+.prose blockquote {
+  color: #1f2937 !important;
+}

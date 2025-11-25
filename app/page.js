@@ -3,7 +3,16 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2, BookOpen, AlertCircle } from "lucide-react";
+import {
+  Send,
+  Bot,
+  User,
+  Loader2,
+  BookOpen,
+  AlertCircle,
+  Menu,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import KajianSidebar from "@/components/KajianSidebar";
 
@@ -14,13 +23,13 @@ function FormattedMessage({ content }) {
   // Helper function to parse inline markdown
   const parseMarkdown = (text) => {
     // Handle bold text (**text** or __text__)
-    let parsed = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    parsed = parsed.replace(/__(.+?)__/g, '<strong>$1</strong>');
-    
+    let parsed = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    parsed = parsed.replace(/__(.+?)__/g, "<strong>$1</strong>");
+
     // Handle italic text (*text* or _text_)
-    parsed = parsed.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    parsed = parsed.replace(/_(.+?)_/g, '<em>$1</em>');
-    
+    parsed = parsed.replace(/\*(.+?)\*/g, "<em>$1</em>");
+    parsed = parsed.replace(/_(.+?)_/g, "<em>$1</em>");
+
     return parsed;
   };
 
@@ -28,14 +37,17 @@ function FormattedMessage({ content }) {
     <div className="space-y-2">
       {lines.map((line, index) => {
         // Deteksi teks Arab (hanya tampilkan dengan styling khusus jika baris HANYA berisi Arab)
-        if (/^[\u0600-\u06FF\s\u060C\u061B\u061F]+$/.test(line.trim()) && line.trim().length > 0) {
+        if (
+          /^[\u0600-\u06FF\s\u060C\u061B\u061F]+$/.test(line.trim()) &&
+          line.trim().length > 0
+        ) {
           return (
             <div
               key={index}
-              className="bg-emerald-50/50 rounded-lg px-4 py-3 my-2"
+              className="bg-emerald-50/50 rounded-lg px-3 md:px-4 py-2 md:py-3 my-2"
             >
               <p
-                className="text-right text-lg leading-loose text-gray-800"
+                className="text-right text-base md:text-lg leading-loose text-gray-800"
                 dir="rtl"
               >
                 {line.trim()}
@@ -51,11 +63,14 @@ function FormattedMessage({ content }) {
 
         // Bullet points (*, -, •)
         if (/^[\s]*[\*\-•]\s+/.test(line)) {
-          const bulletText = line.replace(/^[\s]*[\*\-•]\s+/, '');
+          const bulletText = line.replace(/^[\s]*[\*\-•]\s+/, "");
           return (
-            <div key={index} className="flex gap-2 text-sm text-gray-800 leading-relaxed">
-              <span className="text-emerald-600 mt-1">•</span>
-              <span 
+            <div
+              key={index}
+              className="flex gap-2 text-sm text-gray-800 leading-relaxed"
+            >
+              <span className="text-emerald-600 mt-1 flex-shrink-0">•</span>
+              <span
                 dangerouslySetInnerHTML={{ __html: parseMarkdown(bulletText) }}
               />
             </div>
@@ -67,9 +82,14 @@ function FormattedMessage({ content }) {
           const match = line.match(/^[\s]*(\d+)\.\s+(.+)/);
           if (match) {
             return (
-              <div key={index} className="flex gap-2 text-sm text-gray-800 leading-relaxed">
-                <span className="text-emerald-600 font-semibold">{match[1]}.</span>
-                <span 
+              <div
+                key={index}
+                className="flex gap-2 text-sm text-gray-800 leading-relaxed"
+              >
+                <span className="text-emerald-600 font-semibold flex-shrink-0">
+                  {match[1]}.
+                </span>
+                <span
                   dangerouslySetInnerHTML={{ __html: parseMarkdown(match[2]) }}
                 />
               </div>
@@ -79,8 +99,8 @@ function FormattedMessage({ content }) {
 
         // Regular paragraph with markdown support
         return (
-          <p 
-            key={index} 
+          <p
+            key={index}
             className="text-gray-800 leading-relaxed text-sm"
             dangerouslySetInnerHTML={{ __html: parseMarkdown(line) }}
           />
@@ -90,13 +110,11 @@ function FormattedMessage({ content }) {
   );
 }
 
-// export default FormattedMessage;
-
 export default function IslamicChatbot() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -170,23 +188,24 @@ export default function IslamicChatbot() {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-emerald-50 to-teal-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 shadow-lg">
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-3 md:p-4 shadow-lg">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-xl md:text-2xl font-bold">
               <Image
                 src="/images/sahabat-ilmu-vertikal2.png"
                 alt="Logo"
-                width={200}
-                height={50}
-                className="inline-block"
+                width={150}
+                height={40}
+                className="inline-block md:w-[200px]"
               />
             </h1>
             <button
               onClick={() => setShowSidebar(!showSidebar)}
-              className="lg:hidden bg-white/20 text-xs px-3 py-2 rounded-lg hover:bg-white/30 transition-colors"
+              className="lg:hidden bg-white/20 text-xs px-3 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center gap-1.5"
             >
-              {showSidebar ? "Sembunyikan" : "Lihat"} Kajian
+              <Menu className="w-4 h-4" />
+              <span className="hidden sm:inline">Kajian</span>
             </button>
           </div>
         </div>
@@ -197,33 +216,34 @@ export default function IslamicChatbot() {
         {/* Chat Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="max-w-4xl mx-auto space-y-4">
+          <div className="flex-1 overflow-y-auto p-3 md:p-4">
+            <div className="max-w-4xl mx-auto space-y-3 md:space-y-4">
               {messages.length === 0 && (
-                <div className="text-center py-8">
+                <div className="text-center py-4 md:py-8 px-4">
                   <Image
                     src="/images/sahabat-ilmu-horizontal2.png"
                     alt="Logo"
-                    width={200}
-                    height={50}
-                    className="inline-block"
+                    width={180}
+                    height={45}
+                    className="inline-block mb-3 md:mb-4 md:w-[200px]"
                   />
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+                  <h2 className="text-lg md:text-2xl font-semibold text-gray-800 mb-2 px-2">
                     Assalamu'alaikum Warahmatullahi Wabarakatuh
                   </h2>
-                  <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                  <p className="text-sm md:text-base text-gray-600 mb-4 md:mb-6 max-w-2xl mx-auto px-2">
                     Setiap jawaban dirangkum dari Al-Qur'an, Sunnah yang shahih,
                     dan penjelasan para ulama, mengacu pada konten ilmiah di
                     yufid.com
                   </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 max-w-2xl mx-auto">
                     {exampleQuestions.map((q, i) => (
                       <button
                         key={i}
                         onClick={() => setInput(q)}
-                        className="p-3 bg-white rounded-lg shadow hover:shadow-md transition-all text-left text-sm text-gray-700 hover:bg-emerald-50 hover:border-emerald-200 border border-transparent"
+                        className="p-2.5 md:p-3 bg-white rounded-lg shadow hover:shadow-md transition-all text-left text-xs md:text-sm text-gray-700 hover:bg-emerald-50 hover:border-emerald-200 border border-transparent"
                       >
-                        💬 {q}
+                        <span className="mr-1">💬</span>
+                        <span>{q}</span>
                       </button>
                     ))}
                   </div>
@@ -233,23 +253,23 @@ export default function IslamicChatbot() {
               {messages.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`flex gap-3 ${
+                  className={`flex gap-2 md:gap-3 ${
                     msg.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
                   {msg.role === "assistant" && (
-                    <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
-                      <Bot className="w-5 h-5 text-white" />
+                    <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
+                      <Bot className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
                   )}
 
                   <div
-                    className={`max-w-2xl ${
+                    className={`max-w-[85%] sm:max-w-md md:max-w-2xl ${
                       msg.role === "user" ? "order-1" : ""
                     }`}
                   >
                     <div
-                      className={`rounded-2xl p-4 shadow-sm ${
+                      className={`rounded-2xl p-3 md:p-4 shadow-sm ${
                         msg.role === "user"
                           ? "bg-emerald-600 text-white"
                           : "bg-white text-gray-800"
@@ -259,14 +279,14 @@ export default function IslamicChatbot() {
                         {msg.role === "assistant" ? (
                           <FormattedMessage content={msg.content} />
                         ) : (
-                          <div className="whitespace-pre-wrap leading-relaxed break-words">
+                          <div className="whitespace-pre-wrap leading-relaxed break-words text-sm md:text-base">
                             {msg.content}
                           </div>
                         )}
                       </div>
 
                       {msg.sources && msg.sources.length > 0 && (
-                        <div className="mt-4 pt-3 border-t border-gray-100">
+                        <div className="mt-3 md:mt-4 pt-2 md:pt-3 border-t border-gray-100">
                           <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1">
                             <BookOpen className="w-3 h-3" />
                             Sumber Referensi:
@@ -280,11 +300,11 @@ export default function IslamicChatbot() {
                                 rel="noopener noreferrer"
                                 className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline block bg-emerald-50 px-2 py-1.5 rounded transition-colors"
                               >
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="flex-1">
+                                <div className="flex items-start sm:items-center justify-between gap-2 flex-col sm:flex-row">
+                                  <span className="flex-1 line-clamp-2">
                                     📄 {source.title}
                                   </span>
-                                  <span className="text-[10px] text-gray-500 font-medium bg-white px-2 py-0.5 rounded">
+                                  <span className="text-[10px] text-gray-500 font-medium bg-white px-2 py-0.5 rounded flex-shrink-0">
                                     {source.website}
                                   </span>
                                 </div>
@@ -297,22 +317,22 @@ export default function IslamicChatbot() {
                   </div>
 
                   {msg.role === "user" && (
-                    <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
-                      <User className="w-5 h-5 text-white" />
+                    <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
+                      <User className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
                   )}
                 </div>
               ))}
 
               {loading && (
-                <div className="flex gap-3 justify-start">
-                  <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-5 h-5 text-white" />
+                <div className="flex gap-2 md:gap-3 justify-start">
+                  <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-4 h-4 md:w-5 md:h-5 text-white" />
                   </div>
-                  <div className="bg-white rounded-2xl p-4 shadow-sm">
+                  <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm">
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Loader2 className="w-5 h-5 animate-spin text-emerald-600" />
-                      <span className="text-sm">
+                      <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin text-emerald-600" />
+                      <span className="text-xs md:text-sm">
                         Mencari jawaban dari yufid.com...
                       </span>
                     </div>
@@ -325,7 +345,7 @@ export default function IslamicChatbot() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t bg-white p-4 shadow-lg">
+          <div className="border-t bg-white p-3 md:p-4 shadow-lg">
             <div className="max-w-4xl mx-auto">
               <div className="flex gap-2">
                 <input
@@ -334,50 +354,87 @@ export default function IslamicChatbot() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Ketik pertanyaan agama Anda di sini..."
-                  className="flex-1 rounded-full border border-gray-300 px-6 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-800"
+                  className="flex-1 rounded-full border border-gray-300 px-4 md:px-6 py-2.5 md:py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-800 text-sm md:text-base"
                   disabled={loading}
                 />
                 <button
                   onClick={handleSend}
                   disabled={loading || !input.trim()}
-                  className="bg-emerald-600 text-white rounded-full p-3 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  className="bg-emerald-600 text-white rounded-full p-2.5 md:p-3 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors shadow-sm flex-shrink-0"
                   title="Kirim pertanyaan"
                 >
-                  <Send className="w-5 h-5" />
+                  <Send className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
+              <p className="text-[10px] md:text-xs text-gray-500 mt-2 text-center px-2">
                 Tekan Enter untuk mengirim • Shift+Enter untuk baris baru
               </p>
             </div>
           </div>
         </div>
 
-        {/* Sidebar Kajian */}
-        {showSidebar && (
-          <div className="hidden lg:block border-l bg-gray-50 p-4 overflow-y-auto">
-            <KajianSidebar />
-          </div>
-        )}
+        {/* Sidebar Kajian - Desktop */}
+        <div className="hidden lg:block border-l bg-gray-50 p-4 overflow-y-auto">
+          <KajianSidebar />
+        </div>
       </div>
 
       {/* Mobile Sidebar Overlay */}
       {showSidebar && (
-        <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40">
-          <div className="absolute right-0 top-0 h-full w-80 bg-white shadow-xl p-4 overflow-y-auto">
-            <div className="flex justify-between items-center mb-4 text-gray-900">
-              <h3 className="font-bold text-2xl">Daftar Kajian</h3>
-              <button
-                onClick={() => setShowSidebar(false)}
-                className="p-2 hover:bg-gray-100 rounded-full"
-              >
-                ✕
-              </button>
+        <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50 animate-fade-in">
+          <div className="absolute right-0 top-0 h-full w-full sm:w-80 bg-white shadow-xl overflow-hidden animate-slide-in">
+            <div className="flex flex-col h-full">
+              <div className="flex justify-between items-center p-4 border-b bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+                <h3 className="font-bold text-lg md:text-xl">Daftar Kajian</h3>
+                <button
+                  onClick={() => setShowSidebar(false)}
+                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                <KajianSidebar />
+              </div>
             </div>
-            <KajianSidebar />
           </div>
         </div>
       )}
+
+      <style jsx global>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slide-in {
+          from {
+            transform: translateX(100%);
+          }
+          to {
+            transform: translateX(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.2s ease-out;
+        }
+
+        .animate-slide-in {
+          animation: slide-in 0.3s ease-out;
+        }
+
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </div>
   );
 }

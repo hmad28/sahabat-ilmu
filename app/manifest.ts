@@ -13,18 +13,18 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait",
     icons: [
       {
-        src: "https://ibb.co.com/WvvHtjC1",
+        src: "images/192x192-icon-sahabat-ilmu.png/",
         sizes: "192x192",
         type: "image/png",
         // purpose: "any maskable",
       },
       {
-        src: "https://ibb.co.com/ds0ydXc6",
+        src: "/images/384x384-icon-sahabat-ilmu.png",
         sizes: "384x384",
         type: "image/png",
       },
       {
-        src: "https://ibb.co.com/1fGBMN63",
+        src: "/images/512x512-icon-sahabat-ilmu.png",
         sizes: "512x512",
         type: "image/png",
       },

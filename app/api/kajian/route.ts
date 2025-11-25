@@ -2,31 +2,40 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { kajian } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+// import { and } from "drizzle-orm/expressions";
 
+// GET all kajian
+// GET all kajian
 // GET all kajian
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "published";
 
-    let query = db.select().from(kajian).orderBy(desc(kajian.createdAt));
+    const baseQuery = db.select().from(kajian).orderBy(desc(kajian.createdAt));
 
-    if (status !== "all") {
-      query = query.where(eq(kajian.status, status));
-    }
+    // Jangan mutate — build query baru
+    const finalQuery =
+      status === "all" ? baseQuery : baseQuery.where(eq(kajian.status, status));
 
-    const allKajian = await query;
+    const allKajian = await finalQuery;
 
     return NextResponse.json(allKajian);
   } catch (error) {
-    console.error("Error fetching kajian:", error);
+    console.error("Error creating kajian:", error);
+
+    const errMsg = error instanceof Error ? error.message : String(error);
+
     return NextResponse.json(
-      { error: "Failed to fetch kajian" },
+      { error: "Failed to create kajian", details: errMsg },
       { status: 500 }
     );
   }
+
 }
 
+
+// POST create kajian
 // POST create kajian
 export async function POST(request: Request) {
   try {
@@ -62,9 +71,13 @@ export async function POST(request: Request) {
     return NextResponse.json(newKajian);
   } catch (error) {
     console.error("Error creating kajian:", error);
+
+    const errMsg = error instanceof Error ? error.message : "Unknown error";
+
     return NextResponse.json(
-      { error: "Failed to create kajian", details: error.message },
+      { error: "Failed to create kajian", details: errMsg },
       { status: 500 }
     );
   }
 }
+

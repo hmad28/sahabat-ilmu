@@ -11,89 +11,86 @@ import KajianSidebar from "@/components/KajianSidebar";
 function FormattedMessage({ content }) {
   const lines = content.split("\n");
 
+  // Helper function to parse inline markdown
+  const parseMarkdown = (text) => {
+    // Handle bold text (**text** or __text__)
+    let parsed = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    parsed = parsed.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    
+    // Handle italic text (*text* or _text_)
+    parsed = parsed.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    parsed = parsed.replace(/_(.+?)_/g, '<em>$1</em>');
+    
+    return parsed;
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {lines.map((line, index) => {
-        // Dalil Al-Quran
-        if (line.includes("📖") || line.includes("DALIL AL-QURAN")) {
-          return (
-            <div key={index} className="mt-4 pt-3 border-t border-emerald-100">
-              <div className="bg-emerald-50 rounded-lg p-3 border-l-4 border-emerald-500">
-                <p className="font-semibold text-emerald-800 text-sm mb-1 flex items-center gap-1">
-                  📖 Dalil Al-Quran
-                </p>
-              </div>
-            </div>
-          );
-        }
-
-        // Dalil Hadits
-        if (line.includes("📚") || line.includes("DALIL HADITS")) {
-          return (
-            <div key={index} className="mt-3">
-              <div className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
-                <p className="font-semibold text-blue-800 text-sm mb-1 flex items-center gap-1">
-                  📚 Dalil Hadits
-                </p>
-              </div>
-            </div>
-          );
-        }
-
-        // Kesimpulan
-        if (line.includes("✅") || line.includes("KESIMPULAN")) {
-          return (
-            <div key={index} className="mt-3">
-              <div className="bg-amber-50 rounded-lg p-3 border-l-4 border-amber-500">
-                <p className="font-semibold text-amber-800 text-sm mb-1 flex items-center gap-1">
-                  ✅ Kesimpulan
-                </p>
-              </div>
-            </div>
-          );
-        }
-
-        // Content dalil (QS., HR., atau isi dalam kotak)
-        if (
-          line.includes("QS.") ||
-          line.includes("Q.S.") ||
-          line.includes("HR.") ||
-          (line.startsWith('"') && line.endsWith('"'))
-        ) {
+        // Deteksi teks Arab (hanya tampilkan dengan styling khusus jika baris HANYA berisi Arab)
+        if (/^[\u0600-\u06FF\s\u060C\u061B\u061F]+$/.test(line.trim()) && line.trim().length > 0) {
           return (
             <div
               key={index}
-              className="pl-3 text-sm text-gray-700 italic leading-relaxed"
+              className="bg-emerald-50/50 rounded-lg px-4 py-3 my-2"
             >
-              {line}
-            </div>
-          );
-        }
-
-        // Isi kesimpulan
-        if (index > 0 && lines[index - 1].includes("✅")) {
-          return (
-            <div key={index} className="pl-3 text-sm text-gray-700 font-medium">
-              {line}
+              <p
+                className="text-right text-lg leading-loose text-gray-800"
+                dir="rtl"
+              >
+                {line.trim()}
+              </p>
             </div>
           );
         }
 
         // Skip empty lines
         if (line.trim() === "") {
-          return <div key={index} className="h-2" />;
+          return <div key={index} className="h-1" />;
         }
 
-        // Regular paragraph
+        // Bullet points (*, -, •)
+        if (/^[\s]*[\*\-•]\s+/.test(line)) {
+          const bulletText = line.replace(/^[\s]*[\*\-•]\s+/, '');
+          return (
+            <div key={index} className="flex gap-2 text-sm text-gray-800 leading-relaxed">
+              <span className="text-emerald-600 mt-1">•</span>
+              <span 
+                dangerouslySetInnerHTML={{ __html: parseMarkdown(bulletText) }}
+              />
+            </div>
+          );
+        }
+
+        // Numbered lists (1., 2., etc.)
+        if (/^[\s]*\d+\.\s+/.test(line)) {
+          const match = line.match(/^[\s]*(\d+)\.\s+(.+)/);
+          if (match) {
+            return (
+              <div key={index} className="flex gap-2 text-sm text-gray-800 leading-relaxed">
+                <span className="text-emerald-600 font-semibold">{match[1]}.</span>
+                <span 
+                  dangerouslySetInnerHTML={{ __html: parseMarkdown(match[2]) }}
+                />
+              </div>
+            );
+          }
+        }
+
+        // Regular paragraph with markdown support
         return (
-          <p key={index} className="text-gray-800 leading-relaxed text-[15px]">
-            {line}
-          </p>
+          <p 
+            key={index} 
+            className="text-gray-800 leading-relaxed text-sm"
+            dangerouslySetInnerHTML={{ __html: parseMarkdown(line) }}
+          />
         );
       })}
     </div>
   );
 }
+
+// export default FormattedMessage;
 
 export default function IslamicChatbot() {
   const [messages, setMessages] = useState([]);
@@ -283,7 +280,14 @@ export default function IslamicChatbot() {
                                 rel="noopener noreferrer"
                                 className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline block bg-emerald-50 px-2 py-1.5 rounded transition-colors"
                               >
-                                📄 {source.title}
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="flex-1">
+                                    📄 {source.title}
+                                  </span>
+                                  <span className="text-[10px] text-gray-500 font-medium bg-white px-2 py-0.5 rounded">
+                                    {source.website}
+                                  </span>
+                                </div>
                               </a>
                             ))}
                           </div>

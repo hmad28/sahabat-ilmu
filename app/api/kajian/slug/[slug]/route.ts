@@ -1,3 +1,5 @@
+// app/api/kajian/slug/[slug]/route.ts
+
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { kajian, users } from "@/db/schema"; // Import users table

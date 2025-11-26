@@ -204,6 +204,14 @@ export default function IslamicChatbot() {
               />
             </Link>
             <div className="flex items-center gap-2">
+              {/* Tombol About */}
+              <Link
+                href="/about"
+                className="hidden md:flex bg-white/20 text-white text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-lg hover:bg-white/30 transition-all items-center gap-1.5"
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Tentang</span>
+              </Link>
               {!session && (
                 <a
                   href="/register"
@@ -431,7 +439,7 @@ export default function IslamicChatbot() {
                 </button>
               </div>
 
-              <div className="w-full pt-4 px-4">
+              <div className="w-full pt-4 px-4 space-y-2">
                 {!session && (
                   <a
                     href="/register"
@@ -451,6 +459,14 @@ export default function IslamicChatbot() {
                     <span>Dashboard</span>
                   </a>
                 )}
+                {/* Tombol About */}
+                <Link
+                  href="/about"
+                  className="flex bg-white border-2 border-emerald-600 text-emerald-600 text-sm font-semibold px-3 py-3 rounded-lg hover:bg-emerald-50 transition-all items-center gap-1.5"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>Tentang Kami</span>
+                </Link>
               </div>
               <div className="flex-1 overflow-y-auto p-4">
                 <KajianSidebar />

@@ -32,6 +32,8 @@ import RichTextEditor from "@/components/RichTextEditor";
 import { useRouter } from "next/navigation";
 import AdminTable from "@/components/AdminTable";
 import ActivityLogs from "@/components/ActivityLogs";
+import Link from "next/link";
+
 
 interface Kajian {
   id: number;
@@ -430,9 +432,28 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" />
 
+    {/* Header */}
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-3 md:p-4 shadow-lg">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center justify-between">
+                <Link href="/" className="text-xl md:text-2xl font-bold">
+                  <Image
+                    src="/images/sahabat-ilmu-vertikal2.png"
+                    alt="Logo"
+                    width={150}
+                    height={40}
+                    className="inline-block md:w-[200px]"
+                  />
+                </Link>
+
+              </div>
+            </div>
+          </div>
+
       {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 py-6">
+          
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">

@@ -77,7 +77,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = Number(user.id);
         token.role = user.role;
@@ -89,35 +89,37 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id;
         session.user.role = token.role;
       }
-
-      // Log successful login
-      await logActivity({
-        userId: token.id,
-        action: "LOGIN",
-        entityType: "auth",
-        description: `${session.user.name} login ke sistem`,
-        metadata: {
-          email: session.user.email,
-        },
-      });
-
       return session;
     },
   },
   events: {
-  async signOut(message) {
-    const userId = message?.token?.sub;
+    async signIn(message) {
+      // Log hanya saat user benar-benar login (bukan refresh)
+      if (message.user) {
+        await logActivity({
+          userId: Number(message.user.id),
+          action: "LOGIN",
+          entityType: "auth",
+          description: `${message.user.name} login ke sistem`,
+          metadata: {
+            email: message.user.email,
+          },
+        });
+      }
+    },
+    async signOut(message) {
+      const userId = message?.token?.sub;
 
-    if (userId) {
-      await logActivity({
-        userId: Number(userId),
-        action: "LOGOUT",
-        description: "User logged out",
-        entityType: "auth",
-      });
-    }
+      if (userId) {
+        await logActivity({
+          userId: Number(userId),
+          action: "LOGOUT",
+          entityType: "auth",
+          description: "User logged out",
+        });
+      }
+    },
   },
-},
   pages: {
     signIn: "/login",
   },

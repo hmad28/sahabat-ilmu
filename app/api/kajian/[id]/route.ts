@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
 import { kajian } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { logActivity } from "@/lib/activity-logger";
+import slugify from "slugify";
 
 // PUT - Update kajian (requires auth + ownership or super admin)
 export async function PUT(
@@ -84,6 +86,48 @@ export async function PUT(
       .where(eq(kajian.id, id))
       .returning();
 
+    // Track changes
+    type TrackField =
+      | "title"
+      | "excerpt"
+      | "status"
+      | "ustadz"
+      | "location"
+      | "date";
+
+    const trackFields: TrackField[] = [
+      "title",
+      "excerpt",
+      "status",
+      "ustadz",
+      "location",
+      "date",
+    ];
+
+    const changes: Record<string, any> = {};
+
+    trackFields.forEach((field) => {
+      if (existingKajian[field] !== updatedKajian[field]) {
+        changes[field] = {
+          from: existingKajian[field],
+          to: updatedKajian[field],
+        };
+      }
+    });
+
+
+    // Log activity
+    await logActivity({
+      userId: session.user.id,
+      action: "UPDATE",
+      entityType: "kajian",
+      entityId: updatedKajian.id,
+      description: `Mengupdate kajian: "${updatedKajian.title}"`,
+      metadata: {
+        changes: Object.keys(changes).length > 0 ? changes : undefined,
+      },
+    });
+
     return NextResponse.json(updatedKajian);
   } catch (error: any) {
     console.error("PUT kajian error:", error);
@@ -133,6 +177,21 @@ export async function DELETE(
 
     // Delete kajian
     await db.delete(kajian).where(eq(kajian.id, id));
+
+    // Log activity
+    await logActivity({
+      userId: session.user.id,
+      action: "DELETE",
+      entityType: "kajian",
+      entityId: id,
+      description: `Menghapus kajian: "${existingKajian.title}"`,
+      metadata: {
+        oldValue: {
+          title: existingKajian.title,
+          status: existingKajian.status,
+        },
+      },
+    });
 
     return NextResponse.json({ message: "Kajian deleted successfully" });
   } catch (error: any) {

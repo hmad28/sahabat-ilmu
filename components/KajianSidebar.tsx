@@ -51,7 +51,7 @@ export default function KajianSidebar() {
   };
 
   return (
-    <div className="w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+    <div className="w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 h-full overflow-y-auto">
       <div className="flex items-center gap-2 mb-4 pb-3 border-b">
         <BookOpen className="w-5 h-5 text-emerald-600" />
         <h3 className="font-bold text-lg text-gray-900">Kajian Terbaru</h3>

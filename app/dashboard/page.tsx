@@ -18,6 +18,9 @@ import {
   Eye,
   Crown,
   Users,
+  Settings,
+  Lock,
+  History,
 } from "lucide-react";
 import { useUploadThing } from "@/lib/uploadthing";
 import { format } from "date-fns";
@@ -27,7 +30,8 @@ import Image from "next/image";
 import mammoth from "mammoth";
 import RichTextEditor from "@/components/RichTextEditor";
 import { useRouter } from "next/navigation";
-import AdminTable from "@/components/AdminTable"; // Add this import
+import AdminTable from "@/components/AdminTable";
+import ActivityLogs from "@/components/ActivityLogs";
 
 interface Kajian {
   id: number;
@@ -52,14 +56,18 @@ interface Kajian {
 }
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [kajianList, setKajianList] = useState<Kajian[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [editingKajian, setEditingKajian] = useState<Kajian | null>(null);
   const [loading, setLoading] = useState(false);
   const [isLoadingList, setIsLoadingList] = useState(true);
-  const [activeTab, setActiveTab] = useState<"kajian" | "admins">("kajian");
+  const [activeTab, setActiveTab] = useState<"kajian" | "admins" | "logs">(
+    "kajian"
+  );
+  const [isUploading, setIsUploading] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -74,13 +82,38 @@ export default function DashboardPage() {
     status: "published",
   });
 
-  const { startUpload, isUploading } = useUploadThing("imageUploader");
+  const [profileData, setProfileData] = useState({
+    name: session?.user?.name || "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  // Initialize UploadThing hook
+  const { startUpload, isUploading: isUploadThingUploading } = useUploadThing(
+    "imageUploader",
+    {
+      onClientUploadComplete: (res) => {
+        console.log("Upload completed:", res);
+      },
+      onUploadError: (error) => {
+        console.error("Upload error:", error);
+        alert("Gagal upload gambar: " + error.message);
+      },
+    }
+  );
 
   const isSuperAdmin = session?.user?.role === "SUPER_ADMIN";
 
   useEffect(() => {
     if (status === "authenticated") {
       fetchKajian();
+      setProfileData({
+        name: session?.user?.name || "",
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
     }
   }, [status]);
 
@@ -88,13 +121,8 @@ export default function DashboardPage() {
     setIsLoadingList(true);
     try {
       const res = await fetch("/api/kajian?status=all");
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-
       if (Array.isArray(data)) {
         setKajianList(data);
       } else {
@@ -110,6 +138,75 @@ export default function DashboardPage() {
     }
   };
 
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validasi
+    if (!profileData.name.trim()) {
+      toast.error("Nama tidak boleh kosong");
+      return;
+    }
+
+    if (profileData.newPassword) {
+      if (profileData.newPassword.length < 6) {
+        toast.error("Password baru minimal 6 karakter");
+        return;
+      }
+      if (profileData.newPassword !== profileData.confirmPassword) {
+        toast.error("Konfirmasi password tidak cocok");
+        return;
+      }
+      if (!profileData.currentPassword) {
+        toast.error("Masukkan password lama untuk mengubah password");
+        return;
+      }
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: profileData.name,
+          currentPassword: profileData.currentPassword || undefined,
+          newPassword: profileData.newPassword || undefined,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success(data.message);
+
+        // Update session
+        await update({
+          ...session,
+          user: {
+            ...session?.user,
+            name: profileData.name,
+          },
+        });
+
+        setShowProfileModal(false);
+        setProfileData({
+          name: profileData.name,
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+      } else {
+        toast.error(data.error || "Gagal memperbarui profil");
+      }
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toast.error("Terjadi kesalahan saat memperbarui profil");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handler untuk upload gambar
   const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     type: "cover" | "gallery"
@@ -118,18 +215,53 @@ export default function DashboardPage() {
     if (!files || files.length === 0) return;
 
     try {
-      const uploaded = await startUpload(Array.from(files));
-      if (uploaded) {
-        const urls = uploaded.map((file) => file.url);
-        if (type === "cover") {
-          setFormData({ ...formData, coverImage: urls[0] });
-        } else {
-          setFormData({ ...formData, gallery: [...formData.gallery, ...urls] });
-        }
-        toast.success("Upload berhasil!");
+      setIsUploading(true);
+
+      // Validate file size (max 4MB per file)
+      const maxSize = 4 * 1024 * 1024; // 4MB
+      const oversizedFiles = Array.from(files).filter(
+        (file) => file.size > maxSize
+      );
+
+      if (oversizedFiles.length > 0) {
+        alert(
+          `File terlalu besar: ${oversizedFiles
+            .map((f) => f.name)
+            .join(", ")}. Maksimal 4MB per file.`
+        );
+        setIsUploading(false);
+        return;
       }
+
+      // Upload files using UploadThing
+      const uploadedFiles = await startUpload(Array.from(files));
+
+      if (!uploadedFiles || uploadedFiles.length === 0) {
+        throw new Error("Upload gagal, tidak ada file yang ter-upload");
+      }
+
+      // Update form data based on upload type
+      if (type === "cover") {
+        setFormData({
+          ...formData,
+          coverImage: uploadedFiles[0].url,
+        });
+        alert("Cover image berhasil di-upload!");
+      } else if (type === "gallery") {
+        setFormData({
+          ...formData,
+          gallery: [...formData.gallery, ...uploadedFiles.map((f) => f.url)],
+        });
+        alert(`${uploadedFiles.length} gambar berhasil di-upload!`);
+      }
+
+      // Reset input
+      e.target.value = "";
     } catch (error) {
-      toast.error("Upload gagal!");
+      console.error("Upload error:", error);
+      alert("Gagal upload gambar. Silakan coba lagi.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -151,17 +283,12 @@ export default function DashboardPage() {
         setFormData({ ...formData, content: result.value });
         toast.dismiss();
         toast.success("File DOCX berhasil diimport!");
-
-        if (result.messages.length > 0) {
-          console.log("Import messages:", result.messages);
-        }
       }
     } catch (error) {
       toast.dismiss();
       console.error("DOCX import error:", error);
       toast.error("Gagal mengimport file DOCX");
     }
-
     e.target.value = "";
   };
 
@@ -212,7 +339,6 @@ export default function DashboardPage() {
   };
 
   const handleEdit = (kajian: Kajian) => {
-    // Check permission
     if (!isSuperAdmin && kajian.authorId !== session?.user?.id) {
       toast.error("Anda tidak memiliki akses untuk mengedit kajian ini");
       return;
@@ -235,7 +361,6 @@ export default function DashboardPage() {
   };
 
   const handleDelete = async (kajian: Kajian) => {
-    // Check permission
     if (!isSuperAdmin && kajian.authorId !== session?.user?.id) {
       toast.error("Anda tidak memiliki akses untuk menghapus kajian ini");
       return;
@@ -284,7 +409,6 @@ export default function DashboardPage() {
     await signOut({ callbackUrl: "/login" });
   };
 
-  // Filter kajian based on role
   const filteredKajianList = isSuperAdmin
     ? kajianList
     : kajianList.filter((k) => k.authorId === session?.user?.id);
@@ -343,6 +467,13 @@ export default function DashboardPage() {
                 Tambah Kajian
               </button>
               <button
+                onClick={() => setShowProfileModal(true)}
+                className="bg-blue-50 text-blue-600 px-4 py-3 rounded-lg hover:bg-blue-100 flex items-center gap-2 transition-colors"
+              >
+                <Settings className="w-5 h-5" />
+                <span className="hidden sm:inline">Profil</span>
+              </button>
+              <button
                 onClick={handleLogout}
                 className="bg-red-50 text-red-600 px-4 py-3 rounded-lg hover:bg-red-100 flex items-center gap-2 transition-colors"
               >
@@ -351,7 +482,7 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
-          {/* Tab Navigation - Only show for Super Admin */}
+
           {isSuperAdmin && (
             <div className="mt-6 border-b border-gray-200">
               <nav className="flex gap-8">
@@ -377,6 +508,17 @@ export default function DashboardPage() {
                   <Users className="w-5 h-5" />
                   Daftar Admin
                 </button>
+                <button
+                  onClick={() => setActiveTab("logs")}
+                  className={`pb-4 px-1 border-b-2 font-semibold text-sm transition-colors flex items-center gap-2 ${
+                    activeTab === "logs"
+                      ? "border-emerald-500 text-emerald-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <History className="w-5 h-5" />
+                  Activity Logs
+                </button>
               </nav>
             </div>
           )}
@@ -387,173 +529,53 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {activeTab === "kajian" ? (
           <>
-          
-            {/* Stats Cards (Optional) */}
-            <div className="max-w-7xl mx-auto px-4 py-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Total Kajian</p>
-                      <p className="text-3xl font-bold text-gray-900">
-                        {filteredKajianList.length}
-                      </p>
-                    </div>
-                    <BookOpen className="w-12 h-12 text-emerald-500 opacity-20" />
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Total Kajian</p>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {filteredKajianList.length}
+                    </p>
                   </div>
+                  <BookOpen className="w-12 h-12 text-emerald-500 opacity-20" />
                 </div>
+              </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Published</p>
-                      <p className="text-3xl font-bold text-gray-900">
-                        {
-                          filteredKajianList.filter(
-                            (k) => k.status === "published"
-                          ).length
-                        }
-                      </p>
-                    </div>
-                    <Shield className="w-12 h-12 text-green-500 opacity-20" />
+              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Published</p>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {
+                        filteredKajianList.filter(
+                          (k) => k.status === "published"
+                        ).length
+                      }
+                    </p>
                   </div>
+                  <Shield className="w-12 h-12 text-green-500 opacity-20" />
                 </div>
+              </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-gray-500">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Draft</p>
-                      <p className="text-3xl font-bold text-gray-900">
-                        {
-                          filteredKajianList.filter((k) => k.status === "draft")
-                            .length
-                        }
-                      </p>
-                    </div>
-                    <FileText className="w-12 h-12 text-gray-500 opacity-20" />
+              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-gray-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Draft</p>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {
+                        filteredKajianList.filter((k) => k.status === "draft")
+                          .length
+                      }
+                    </p>
                   </div>
+                  <FileText className="w-12 h-12 text-gray-500 opacity-20" />
                 </div>
               </div>
             </div>
 
             {/* Kajian List */}
-            <div className="max-w-7xl mx-auto px-4 pb-8">
-              {isLoadingList ? (
-                <div className="flex justify-center items-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
-                  <span className="ml-2 text-gray-600">Memuat data...</span>
-                </div>
-              ) : filteredKajianList.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-xl shadow-sm">
-                  <BookOpen className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600 text-lg">Belum ada kajian</p>
-                  <p className="text-gray-500 text-sm mt-1">
-                    Klik "Tambah Kajian" untuk membuat kajian baru
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredKajianList.map((kajian) => {
-                    const isOwner = kajian.authorId === session?.user?.id;
-                    const canEdit = isSuperAdmin || isOwner;
-
-                    return (
-                      <div
-                        key={kajian.id}
-                        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-                      >
-                        {kajian.coverImage && (
-                          <div className="relative h-48 bg-gray-200">
-                            <Image
-                              src={kajian.coverImage}
-                              alt={kajian.title}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="p-4">
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <span
-                              className={`px-2 py-1 text-xs rounded-full ${
-                                kajian.status === "published"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {kajian.status}
-                            </span>
-                            {!isOwner && isSuperAdmin && (
-                              <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                                by {kajian.author.name}
-                              </span>
-                            )}
-                          </div>
-                          <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-2">
-                            {kajian.title}
-                          </h3>
-                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                            {stripHtml(kajian.excerpt)}
-                          </p>
-
-                          <div className="space-y-1 text-xs text-gray-500 mb-4">
-                            {kajian.ustadz && (
-                              <div className="flex items-center gap-1">
-                                <User className="w-3 h-3" />
-                                {kajian.ustadz}
-                              </div>
-                            )}
-
-                            {kajian.location && (
-                              <div className="flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {kajian.location}
-                              </div>
-                            )}
-                            {kajian.date && (
-                              <div className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {format(new Date(kajian.date), "dd MMMM yyyy", {
-                                  locale: id,
-                                })}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEdit(kajian)}
-                              disabled={!canEdit}
-                              className={`flex-1 px-3 py-2 rounded flex items-center justify-center gap-1 text-sm transition-colors ${
-                                canEdit
-                                  ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                              }`}
-                            >
-                              <Edit className="w-4 h-4" />
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDelete(kajian)}
-                              disabled={!canEdit}
-                              className={`flex-1 px-3 py-2 rounded flex items-center justify-center gap-1 text-sm transition-colors ${
-                                canEdit
-                                  ? "bg-red-50 text-red-600 hover:bg-red-100"
-                                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                              }`}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              Hapus
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
             {isLoadingList ? (
               <div className="flex justify-center items-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
@@ -569,15 +591,262 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* ... your existing kajian cards ... */}
+                {filteredKajianList.map((kajian) => {
+                  const isOwner = kajian.authorId === session?.user?.id;
+                  const canEdit = isSuperAdmin || isOwner;
+
+                  return (
+                    <div
+                      key={kajian.id}
+                      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                    >
+                      {kajian.coverImage && (
+                        <div className="relative h-48 bg-gray-200">
+                          <Image
+                            src={kajian.coverImage}
+                            alt={kajian.title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="p-4">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              kajian.status === "published"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {kajian.status}
+                          </span>
+                          {!isOwner && isSuperAdmin && (
+                            <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                              by {kajian.author.name}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-2">
+                          {kajian.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                          {stripHtml(kajian.excerpt)}
+                        </p>
+
+                        <div className="space-y-1 text-xs text-gray-500 mb-4">
+                          {kajian.ustadz && (
+                            <div className="flex items-center gap-1">
+                              <User className="w-3 h-3" />
+                              {kajian.ustadz}
+                            </div>
+                          )}
+                          {kajian.location && (
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {kajian.location}
+                            </div>
+                          )}
+                          {kajian.date && (
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {format(new Date(kajian.date), "dd MMMM yyyy", {
+                                locale: id,
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEdit(kajian)}
+                            disabled={!canEdit}
+                            className={`flex-1 px-3 py-2 rounded flex items-center justify-center gap-1 text-sm transition-colors ${
+                              canEdit
+                                ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            }`}
+                          >
+                            <Edit className="w-4 h-4" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(kajian)}
+                            disabled={!canEdit}
+                            className={`flex-1 px-3 py-2 rounded flex items-center justify-center gap-1 text-sm transition-colors ${
+                              canEdit
+                                ? "bg-red-50 text-red-600 hover:bg-red-100"
+                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            }`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Hapus
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </>
-        ) : (
-          // Admin Table Tab
+        ) : activeTab === "admins" ? (
           <AdminTable />
+        ) : (
+          <ActivityLogs />
         )}
       </div>
+
+      {/* Profile Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-2 sm:p-4 z-50 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl my-4 max-h-[96vh] flex flex-col">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 rounded-t-2xl flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white truncate">
+                    Edit Profil
+                  </h2>
+                  <p className="text-blue-100 text-xs sm:text-sm truncate">
+                    Perbarui nama dan password Anda
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProfileModal(false);
+                    setProfileData({
+                      name: session?.user?.name || "",
+                      currentPassword: "",
+                      newPassword: "",
+                      confirmPassword: "",
+                    });
+                  }}
+                  className="flex-shrink-0 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+            </div>
+
+            <form
+              onSubmit={handleProfileUpdate}
+              className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1"
+            >
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Nama <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={profileData.name}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, name: e.target.value })
+                  }
+                  className="w-full border-2 border-gray-300 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  placeholder="Nama lengkap Anda"
+                />
+              </div>
+
+              <div className="border-t-2 border-gray-100 pt-4 sm:pt-5">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                  <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">
+                    Ubah Password
+                  </h3>
+                  <span className="text-xs text-gray-500">(opsional)</span>
+                </div>
+
+                <div className="space-y-3 sm:space-y-4">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                      Password Lama
+                    </label>
+                    <input
+                      type="password"
+                      value={profileData.currentPassword}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          currentPassword: e.target.value,
+                        })
+                      }
+                      className="w-full border-2 border-gray-300 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      placeholder="Masukkan password lama"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                      Password Baru
+                    </label>
+                    <input
+                      type="password"
+                      value={profileData.newPassword}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          newPassword: e.target.value,
+                        })
+                      }
+                      className="w-full border-2 border-gray-300 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      placeholder="Minimal 6 karakter"
+                      minLength={6}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                      Konfirmasi Password Baru
+                    </label>
+                    <input
+                      type="password"
+                      value={profileData.confirmPassword}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          confirmPassword: e.target.value,
+                        })
+                      }
+                      className="w-full border-2 border-gray-300 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      placeholder="Ketik ulang password baru"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t-2 border-gray-100 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProfileModal(false);
+                    setProfileData({
+                      name: session?.user?.name || "",
+                      currentPassword: "",
+                      newPassword: "",
+                      confirmPassword: "",
+                    });
+                  }}
+                  className="w-full sm:flex-1 border-2 border-gray-300 text-gray-700 font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl hover:bg-gray-100 transition-colors text-sm sm:text-base"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full sm:flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all shadow-lg text-sm sm:text-base"
+                >
+                  {loading ? "Menyimpan..." : "Simpan Perubahan"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modal Form - Same as before but remove redundant code */}
       {showModal && (
@@ -754,12 +1023,13 @@ export default function DashboardPage() {
                     Cover Image
                   </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-purple-400 transition-colors bg-gray-50">
+                    {/* // Cover Image Input */}
                     <input
                       type="file"
                       accept="image/*"
                       onChange={(e) => handleImageUpload(e, "cover")}
                       className="w-full text-sm text-gray-900 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 file:cursor-pointer"
-                      disabled={isUploading}
+                      disabled={isUploading || isUploadThingUploading}
                     />
                     <p className="text-xs text-gray-600 mt-2">
                       Recommended: 1200x630px, Max 4MB
@@ -792,13 +1062,14 @@ export default function DashboardPage() {
                     Gallery (Multiple Images)
                   </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-purple-400 transition-colors bg-gray-50">
+                    {/* // Gallery Input */}
                     <input
                       type="file"
                       accept="image/*"
                       multiple
                       onChange={(e) => handleImageUpload(e, "gallery")}
                       className="w-full text-sm text-gray-900 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 file:cursor-pointer"
-                      disabled={isUploading}
+                      disabled={isUploading || isUploadThingUploading}
                     />
                     <p className="text-xs text-gray-600 mt-2">
                       Upload multiple images (max 4MB each)

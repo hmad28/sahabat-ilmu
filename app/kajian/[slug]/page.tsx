@@ -332,7 +332,7 @@ export default function KajianDetailPage() {
         </div>
 
         {/* Sidebar Kajian - Desktop */}
-        <div className="hidden lg:flex justify-center items-start border-l bg-gray-50 p-4 overflow-y-auto md:w-88.5 2xl:w-100">
+        <div className="hidden lg:flex justify-center items-start border-l bg-gray-50 px-3 md:px-4 py-4 md:py-8 overflow-y-auto md:w-88.5 2xl:w-100">
           <KajianSidebar />
         </div>
       </div>

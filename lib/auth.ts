@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { logActivity } from "@/lib/activity-logger";
 
 declare module "next-auth" {
   interface Session {
@@ -88,9 +89,35 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id;
         session.user.role = token.role;
       }
+
+      // Log successful login
+      await logActivity({
+        userId: token.id,
+        action: "LOGIN",
+        entityType: "auth",
+        description: `${session.user.name} login ke sistem`,
+        metadata: {
+          email: session.user.email,
+        },
+      });
+
       return session;
     },
   },
+  events: {
+  async signOut(message) {
+    const userId = message?.token?.sub;
+
+    if (userId) {
+      await logActivity({
+        userId: Number(userId),
+        action: "LOGOUT",
+        description: "User logged out",
+        entityType: "auth",
+      });
+    }
+  },
+},
   pages: {
     signIn: "/login",
   },

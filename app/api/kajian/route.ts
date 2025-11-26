@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
 import { kajian, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { logActivity } from "@/lib/activity-logger";
+import slugify from "slugify";
 
 // GET - Fetch all kajian (with author info)
 export async function GET(req: NextRequest) {
@@ -113,6 +115,22 @@ export async function POST(req: NextRequest) {
         authorId: session.user.id,
       })
       .returning();
+
+    // Log activity
+    await logActivity({
+      userId: session.user.id,
+      action: "CREATE",
+      entityType: "kajian",
+      entityId: newKajian.id,
+      description: `Membuat kajian baru: "${newKajian.title}"`,
+      metadata: {
+        newValue: {
+          title: newKajian.title,
+          status: newKajian.status,
+          category: newKajian.category,
+        },
+      },
+    });
 
     return NextResponse.json(newKajian, { status: 201 });
   } catch (error: any) {

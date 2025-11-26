@@ -249,7 +249,7 @@ export default function IslamicChatbot() {
         {/* Chat Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-3 md:p-4">
+          <div className="flex-1 overflow-y-auto p-3 md:p-4 bg">
             <div className="max-w-4xl mx-auto space-y-3 md:space-y-4">
               {messages.length === 0 && (
                 <div className="text-center py-4 md:py-8 px-4">

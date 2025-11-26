@@ -17,6 +17,7 @@ import {
   CreditCard,
   Sparkles,
 } from "lucide-react";
+import Image from "next/image";
 
 export default function SupportPage() {
   const [copiedText, setCopiedText] = useState("");
@@ -30,28 +31,28 @@ export default function SupportPage() {
   const paymentMethods = [
     {
       name: "DANA",
-      number: "0812-3456-7890",
+      number: "0896-9612-7555",
       color: "from-blue-500 to-blue-600",
       icon: Smartphone,
     },
     {
       name: "GoPay",
-      number: "0812-3456-7890",
+      number: "0896-9612-7555",
       color: "from-green-500 to-green-600",
       icon: Smartphone,
     },
-    {
-      name: "OVO",
-      number: "0812-3456-7890",
-      color: "from-purple-500 to-purple-600",
-      icon: Smartphone,
-    },
-    {
-      name: "Bank Transfer",
-      number: "1234567890 (BCA a.n. Nama)",
-      color: "from-blue-600 to-blue-700",
-      icon: CreditCard,
-    },
+    // {
+    //   name: "OVO",
+    //   number: "0812-3456-7890",
+    //   color: "from-purple-500 to-purple-600",
+    //   icon: Smartphone,
+    // },
+    // {
+    //   name: "Bank Transfer",
+    //   number: "1234567890 (BCA a.n. Nama)",
+    //   color: "from-blue-600 to-blue-700",
+    //   icon: CreditCard,
+    // },
   ];
 
   const supportTiers = [
@@ -312,7 +313,14 @@ export default function SupportPage() {
               {/* QR Code Placeholder - Ganti dengan QR Code asli */}
               <div className="bg-gradient-to-br from-emerald-100 to-teal-100 rounded-2xl p-8 shadow-lg">
                 <div className="w-64 h-64 bg-white rounded-xl flex items-center justify-center border-4 border-emerald-500">
-                  <div className="text-center p-6">
+                  <Image
+                    src="/images/qr-code.jpeg"
+                    alt="QR Code"
+                    width={350}
+                    height={200}
+                    className="overflow-hidden rounded-lg"
+                  />
+                  {/* <div className="text-center p-6">
                     <QrCode className="w-32 h-32 text-emerald-600 mx-auto mb-4" />
                     <p className="text-sm text-gray-600 font-medium">
                       Upload QR Code Anda di sini
@@ -320,7 +328,7 @@ export default function SupportPage() {
                     <p className="text-xs text-gray-500 mt-2">
                       (Ganti dengan gambar QR Code asli)
                     </p>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
@@ -367,7 +375,7 @@ export default function SupportPage() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <Heart className="w-16 h-16 text-white mx-auto mb-6 animate-pulse" />
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-            Jazakumullah Khairan Katsira!
+            Jazakumullah Khairan Katsiran!
           </h2>
           <p className="text-xl text-emerald-50 mb-8 max-w-2xl mx-auto leading-relaxed">
             Setiap kontribusi Anda, sekecil apapun, sangat berarti bagi kami dan

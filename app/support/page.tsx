@@ -117,13 +117,11 @@ export default function SupportPage() {
           <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full mix-blend-overlay filter blur-3xl animate-blob"></div>
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full mix-blend-overlay filter blur-3xl animate-blob animation-delay-2000"></div>
         </div>
-
         <div className="relative max-w-6xl mx-auto px-4 py-20 md:py-28 text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-white/20">
             <Heart className="w-4 h-4 animate-pulse" />
             <span className="text-sm font-medium">Support Open Source</span>
           </div>
-
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
             Bantu Kami Terus
             <br />
@@ -131,30 +129,28 @@ export default function SupportPage() {
               Berkembang & Bermanfaat
             </span>
           </h1>
-
           <p className="text-xl md:text-2xl text-emerald-50 mb-8 max-w-3xl mx-auto leading-relaxed">
             Kontribusi Anda membantu kami menjaga platform tetap gratis dan
             terus berkembang untuk ummat
           </p>
-
-          <div className="flex items-center justify-center gap-2 text-emerald-100">
+          <div className="flex items-center justify-center gap-2 text-emerald-100 mb-12">
             <Sparkles className="w-5 h-5" />
             <span className="text-sm">
               100% akan digunakan untuk pengembangan platform
             </span>
           </div>
         </div>
-
-        <div className="absolute bottom-0 left-0 right-0">
+        <div className="absolute bottom-0 left-0 right-0 h-20">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 1440 320"
-            className="w-full"
+            viewBox="0 0 1440 100"
+            className="w-full h-full"
+            preserveAspectRatio="none"
           >
             <path
               fill="#ffffff"
               fillOpacity="1"
-              d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,138.7C960,139,1056,117,1152,106.7C1248,96,1344,96,1392,96L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+              d="M0,32L48,37.3C96,43,192,53,288,58.7C384,64,480,64,576,58.7C672,53,768,43,864,48C960,53,1056,75,1152,74.7C1248,75,1344,53,1392,42.7L1440,32L1440,100L1392,100C1344,100,1248,100,1152,100C1056,100,960,100,864,100C768,100,672,100,576,100C480,100,384,100,288,100C192,100,96,100,48,100L0,100Z"
             ></path>
           </svg>
         </div>

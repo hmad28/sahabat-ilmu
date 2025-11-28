@@ -347,7 +347,7 @@ const { data: session } = useSession();
               </div>
               <div className="flex-1">
                 <h3 className="text-2xl md:text-3xl font-bold text-amber-900 mb-4">
-                  ⚠️ Catatan Penting untuk Pengguna
+                  Catatan Penting untuk Pengguna
                 </h3>
                 <div className="space-y-4 text-amber-900">
                   <p className="leading-relaxed text-lg">
@@ -374,7 +374,7 @@ const { data: session } = useSession();
                   <p className="leading-relaxed font-medium bg-gradient-to-r from-emerald-700 to-teal-700 text-transparent bg-clip-text">
                     Platform ini hanya alat bantu untuk mempermudah, bukan
                     pengganti pembelajaran yang sebenarnya. Tetap kritis dan
-                    selalu verifikasi dengan ulama atau ustadz terpercaya! 📚🤲
+                    selalu verifikasi dengan ulama atau ustadz terpercaya!
                   </p>
                 </div>
               </div>
@@ -466,7 +466,7 @@ const { data: session } = useSession();
               <span className="font-bold">Mohon dimaklumi:</span> Karena ini
               proyek open-source dan masih dalam tahap pengembangan aktif,
               terkadang AI-nya mungkin error atau kena limit. Kami terus
-              melakukan iterasi dan improvement! 🚀
+              melakukan iterasi dan improvement!
             </p>
           </div>
 
@@ -526,7 +526,7 @@ const { data: session } = useSession();
             perkembangan platform ini. Jangan ragu untuk berbagi pendapat Anda.
           </p>
           <p className="text-2xl font-bold text-emerald-700">
-            Jazakumullah Khairan Katsiran! ✨🤲
+            Jazakumullah Khairan Katsiran!
           </p>
         </div>
       </div>
@@ -539,7 +539,7 @@ const { data: session } = useSession();
           Support Kami
         </Link>
         <div className="border-l ml-4 pl-4 text-xs md:text-2xl font-bold text-emerald-700">
-          Jazakumullah Khairan Katsiran! ✨🤲
+          Jazakumullah Khairan Katsiran!
         </div>
       </div>
 

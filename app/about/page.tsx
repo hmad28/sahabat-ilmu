@@ -164,7 +164,7 @@ const { data: session } = useSession();
       )}
 
       {/* Hero Section with Animated Background */}
-      <div className="relative bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 text-white overflow-hidden">
+      <div className="relative bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 text-white overflow-hidden pb-32 md:pb-40">
         {/* Animated Background Patterns */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full mix-blend-overlay filter blur-3xl animate-blob"></div>
@@ -194,14 +194,14 @@ const { data: session } = useSession();
               memudahkan perjalanan belajar agama Anda
             </p>
 
-            <div className="flex flex-wrap justify-center gap-4">
-              <a
+            <div className="flex flex-wrap justify-center gap-4 relative z-10">
+              <Link
                 href="/"
                 className="bg-white text-emerald-600 px-8 py-4 rounded-xl font-bold hover:bg-emerald-50 transition-all shadow-xl hover:shadow-2xl hover:scale-105 inline-flex items-center gap-2"
               >
                 <MessageCircle className="w-5 h-5" />
                 Mulai Bertanya
-              </a>
+              </Link>
               <a
                 href="#features"
                 className="bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-xl font-bold hover:bg-white/20 transition-all border border-white/30 inline-flex items-center gap-2"
@@ -214,7 +214,7 @@ const { data: session } = useSession();
         </div>
 
         {/* Wave Divider */}
-        <div className="absolute bottom-0 left-0 right-0">
+        <div className="absolute -bottom-1 left-0 right-0 pointer-events-none">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 1440 320"
@@ -496,13 +496,13 @@ const { data: session } = useSession();
             kemudahan belajar agama dengan Sahabat Ilmu
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <a
+            <Link
               href="/"
               className="bg-white text-emerald-600 px-8 py-4 rounded-xl font-bold hover:bg-emerald-50 transition-all shadow-xl hover:shadow-2xl inline-flex items-center gap-2 hover:scale-105"
             >
               <MessageCircle className="w-5 h-5" />
               Mulai Chat Sekarang
-            </a>
+            </Link>
             <a
               href="/register"
               className="bg-emerald-700 text-white px-8 py-4 rounded-xl font-bold hover:bg-emerald-800 transition-all shadow-xl inline-flex items-center gap-2 border-2 border-white/30 hover:scale-105"
@@ -532,7 +532,10 @@ const { data: session } = useSession();
       </div>
 
       <div className="w-full flex items-center bg-gradient-to-br from-emerald-50 to-teal-50 p-4">
-        <Link href="support" className="text-xs md:text-base bg-gradient-to-br from-emerald-600 to-teal-600 px-2 py-1 md:px-4 md:py-2 rounded-lg md:rounded-xl border-2 border-white/30 cursor-pointer hover:scale-105 transition-all hover:shadow-xl">
+        <Link
+          href="support"
+          className="text-xs md:text-base bg-gradient-to-br from-emerald-600 to-teal-600 px-2 py-1 md:px-4 md:py-2 rounded-lg md:rounded-xl border-2 border-white/30 cursor-pointer hover:scale-105 transition-all hover:shadow-xl"
+        >
           Support Kami
         </Link>
         <div className="border-l ml-4 pl-4 text-xs md:text-2xl font-bold text-emerald-700">

@@ -189,9 +189,9 @@ export default function IslamicChatbot() {
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-emerald-50 to-teal-50">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-emerald-50 to-teal-50 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-3 md:p-4 shadow-lg">
+      <div className="sticky top-0 z-30 bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-3 md:p-4 shadow-lg">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             <Link href="/" className="text-xl md:text-2xl font-bold">
@@ -249,7 +249,7 @@ export default function IslamicChatbot() {
         {/* Chat Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-3 md:p-4 bg">
+          <div className="flex-1 overflow-y-auto px-3 py-4 md:px-4">
             <div className="max-w-4xl mx-auto space-y-3 md:space-y-4">
               {messages.length === 0 && (
                 <div className="text-center py-4 md:py-8 px-4">
@@ -390,7 +390,7 @@ export default function IslamicChatbot() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t bg-white p-3 md:p-4 shadow-lg">
+          <div className="sticky bottom-0 z-20 border-t bg-white p-3 md:p-4 shadow-lg">
             <div className="max-w-4xl mx-auto">
               <div className="flex gap-2">
                 <input

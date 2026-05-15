@@ -24,10 +24,18 @@ import {
   useState,
 } from "react";
 
+type ChatSource = { title: string; url: string; website: string };
+
 type ChatMessage = {
   role: "user" | "assistant";
   content: string;
-  sources?: { title: string; url: string; website: string }[];
+  sources?: ChatSource[];
+};
+
+type PreparedMessage = {
+  apiMessage: string;
+  localReply: string;
+  notice: string;
 };
 
 const starterQuestions = [
@@ -63,27 +71,155 @@ const offTopicPattern =
 const genericQuestionPattern =
   /^(apa|siapa|kapan|dimana|di mana|bagaimana|kenapa|mengapa|berapa|buatkan|bikinkan|tolong|jelaskan|ceritakan|rekomendasi|kasih|beri)\b/i;
 
-function getLocalReply(message: string) {
+const technicalWorkPattern =
+  /\b(kode|script|program|python|javascript|typescript|react|next\.?js|laravel|flutter|database|coding|programming|debug|bug|error|html|css|sql)\b/i;
+
+const technicalTaskIntentPattern =
+  /\b(tolong|buat(?:kan)?|bikin(?:kan)?|generate|tulis(?:kan)?|kasih|beri|minta|kode|script|program|debug|fix|perbaiki)\b/i;
+
+const technicalTaskTailPattern =
+  /\b(tolong\s+)?(buat(?:kan)?|bikin(?:kan)?|generate|tulis(?:kan)?|kasih|beri|minta)?\s*[^.!?\n]*(kode|script|program|python|javascript|typescript|react|next\.?js|laravel|flutter|database|coding|programming|debug|bug|error|html|css|sql)[^.!?\n]*/i;
+
+function stripInjectedTasks(message: string) {
+  const segments = message
+    .replace(/\s+([?.!,])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim()
+    .split(/(?<=[.!?])\s+|\s+\b(?:dan|lalu|terus|kemudian|sekalian)\b\s+/i);
+
+  let removed = false;
+  const keptSegments = segments.flatMap((segment) => {
+    const trimmedSegment = segment.trim();
+    const isTechnicalTask =
+      technicalWorkPattern.test(trimmedSegment) &&
+      technicalTaskIntentPattern.test(trimmedSegment);
+
+    if (!isTechnicalTask) {
+      return trimmedSegment ? [trimmedSegment] : [];
+    }
+
+    removed = true;
+    const safePart = trimmedSegment.replace(technicalTaskTailPattern, "").trim();
+    return safePart && religiousPattern.test(safePart) ? [safePart] : [];
+  });
+
+  const cleaned = keptSegments
+    .join(" ")
+    .replace(/\s+([?.!,])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .replace(/[.!?\s]+$/g, "")
+    .trim();
+
+  return {
+    cleaned,
+    removed,
+  };
+}
+
+function normalizeSearchQuery(message: string) {
+  const compact = message
+    .replace(/\bhukum\s+nya\b/gi, "hukumnya")
+    .replace(/\bgimana\b/gi, "bagaimana")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  if (/\b(musik|lagu|nyanyian)\b/i.test(compact) && religiousPattern.test(compact)) {
+    return "hukum musik dalam Islam";
+  }
+
+  if (compact.length <= 140) {
+    return compact;
+  }
+
+  const firstSentence = compact.split(/[.!?]/).find(Boolean)?.trim();
+  if (firstSentence && firstSentence.length >= 12) {
+    return firstSentence.slice(0, 140).trim();
+  }
+
+  return compact.slice(0, 140).trim();
+}
+
+function getNoSourceReply(query: string) {
+  return `Belum ketemu rujukan Yufid.com yang cukup untuk: "${query}".\n\nAku belum bisa menyimpulkan jawaban agama tanpa sumber. Coba pakai kata kunci yang lebih pendek dan langsung, misalnya "hukum musik", "dalil menjaga lisan", atau "tata cara wudhu".`;
+}
+
+function getUntrustedSourceReply(query: string) {
+  return `Aku menemukan hasil pencarian, tapi sumbernya bukan dari Yufid.com, jadi tidak aku jadikan jawaban.\n\nBelum ketemu rujukan Yufid.com yang cukup untuk: "${query}". Coba pakai kata kunci yang lebih pendek atau buka pencarian Yufid.com langsung.`;
+}
+
+function combineNotice(notice: string, reply: string) {
+  return notice ? `${notice}\n\n${reply}` : reply;
+}
+
+function isYufidSource(source: ChatSource) {
+  try {
+    const hostname = new URL(source.url).hostname.replace(/^www\./, "");
+    return hostname === "yufid.com" || hostname.endsWith(".yufid.com");
+  } catch {
+    const website = source.website || "";
+    return website === "yufid.com" || website.endsWith(".yufid.com");
+  }
+}
+
+function prepareMessage(message: string): PreparedMessage {
   const trimmed = message.trim();
   const hasReligiousContext = religiousPattern.test(trimmed);
+  const stripped = stripInjectedTasks(trimmed);
+  const hasInjectedTask = stripped.removed;
+  const cleanedMessage = stripped.cleaned || trimmed;
 
   if (greetingPattern.test(trimmed)) {
-    return "Halo akhi/ukhti. Ada dalil, kajian, atau pembahasan agama yang mau dicari? Coba tulis misalnya: \"dalil menjaga lisan\", \"hukum puasa Ramadhan\", atau \"tata cara wudhu\".";
+    return {
+      apiMessage: "",
+      localReply:
+        "Halo akhi/ukhti. Ada dalil, kajian, atau pembahasan agama yang mau dicari? Coba tulis misalnya: \"dalil menjaga lisan\", \"hukum puasa Ramadhan\", atau \"tata cara wudhu\".",
+      notice: "",
+    };
   }
 
   if (smallTalkPattern.test(trimmed)) {
-    return "Alhamdulillah, siap bantu. Ada dalil, kajian, atau pembahasan agama yang mau dicari hari ini?";
+    return {
+      apiMessage: "",
+      localReply:
+        "Alhamdulillah, siap bantu. Ada dalil, kajian, atau pembahasan agama yang mau dicari hari ini?",
+      notice: "",
+    };
   }
 
   if (assistantQuestionPattern.test(trimmed)) {
-    return "Aku Sahabat Ilmu. Tugasku membantu mencari dalil, kajian, dan pengetahuan agama dari rujukan Yufid.com. Tulis topik yang ingin dicari, nanti aku bantu ringkas dan tampilkan sumbernya bila tersedia.";
+    return {
+      apiMessage: "",
+      localReply:
+        "Aku Sahabat Ilmu. Tugasku membantu mencari dalil, kajian, dan pengetahuan agama dari rujukan Yufid.com. Tulis topik yang ingin dicari, nanti aku bantu ringkas dan tampilkan sumbernya bila tersedia.",
+      notice: "",
+    };
   }
 
   if (!hasReligiousContext && (offTopicPattern.test(trimmed) || genericQuestionPattern.test(trimmed))) {
-    return "Sahabat Ilmu fokus membantu mencari dalil, kajian, dan pengetahuan agama. Untuk topik di luar pembahasan agama, aku tidak menjawab agar tetap aman dan sesuai tujuan aplikasi. Coba tulis pertanyaan agama atau kata kunci rujukan yang ingin dicari.";
+    return {
+      apiMessage: "",
+      localReply:
+        "Sahabat Ilmu fokus membantu mencari dalil, kajian, dan pengetahuan agama. Untuk topik di luar pembahasan agama, aku tidak menjawab agar tetap aman dan sesuai tujuan aplikasi. Coba tulis pertanyaan agama atau kata kunci rujukan yang ingin dicari.",
+      notice: "",
+    };
   }
 
-  return "";
+  if (hasInjectedTask && !religiousPattern.test(cleanedMessage)) {
+    return {
+      apiMessage: "",
+      localReply:
+        "Aku abaikan permintaan teknis seperti kode atau program karena di luar fokus Sahabat Ilmu. Silakan tulis ulang bagian pertanyaan agama yang ingin dicari dari rujukan Yufid.com.",
+      notice: "",
+    };
+  }
+
+  return {
+    apiMessage: normalizeSearchQuery(cleanedMessage),
+    localReply: "",
+    notice: hasInjectedTask
+      ? "Catatan: permintaan teknis seperti kode atau program aku abaikan karena di luar fokus Sahabat Ilmu. Aku lanjut mencari bagian pertanyaan agama saja."
+      : "",
+  };
 }
 
 function FormattedMessage({ content }: { content: string }) {
@@ -231,26 +367,30 @@ export default function YufidChat() {
     setLoading(true);
 
     try {
-      const localReply = getLocalReply(userMessage);
-      if (localReply) {
+      const prepared = prepareMessage(userMessage);
+      if (prepared.localReply) {
         setLoadingText("Menyiapkan jawaban...");
         await new Promise((resolve) => setTimeout(resolve, 450));
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
-            content: localReply,
+            content: prepared.localReply,
             sources: [],
           },
         ]);
         return;
       }
 
-      setLoadingText("Mencari referensi Yufid.com...");
+      setLoadingText(
+        prepared.notice
+          ? "Menyaring pertanyaan lalu mencari rujukan..."
+          : "Mencari referensi Yufid.com..."
+      );
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({ message: prepared.apiMessage }),
       });
 
       const data = await response.json();
@@ -258,12 +398,23 @@ export default function YufidChat() {
         throw new Error(data?.reply || `HTTP error ${response.status}`);
       }
 
+      const rawSources: ChatSource[] = Array.isArray(data.sources) ? data.sources : [];
+      const trustedSources = rawSources.filter(isYufidSource);
+      const hasUntrustedSources = rawSources.length !== trustedSources.length;
+      const sources = hasUntrustedSources ? [] : trustedSources;
+      const noSourceReply =
+        hasUntrustedSources
+          ? getUntrustedSourceReply(prepared.apiMessage)
+          : sources.length === 0 && /tidak menemukan artikel|belum menemukan/i.test(data.reply || "")
+          ? getNoSourceReply(prepared.apiMessage)
+          : data.reply;
+
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: data.reply,
-          sources: data.sources || [],
+          content: combineNotice(prepared.notice, noSourceReply),
+          sources,
         },
       ]);
     } catch (error) {

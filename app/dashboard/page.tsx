@@ -119,7 +119,7 @@ export default function DashboardPage() {
         confirmPassword: "",
       });
     }
-  }, [status]);
+  }, [status, session?.user?.name]);
 
   const fetchKajian = async () => {
     setIsLoadingList(true);
@@ -334,9 +334,10 @@ export default function DashboardPage() {
       } else {
         throw new Error(data.details || data.error || "Failed to save");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Submit error:", error);
-      toast.error(`Gagal menyimpan kajian: ${error.message}`);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      toast.error(`Gagal menyimpan kajian: ${message}`);
     } finally {
       setLoading(false);
     }
@@ -382,7 +383,7 @@ export default function DashboardPage() {
         const data = await res.json();
         toast.error(data.error || "Gagal menghapus kajian");
       }
-    } catch (error) {
+    } catch {
       toast.error("Gagal menghapus kajian");
     }
   };
@@ -609,7 +610,7 @@ export default function DashboardPage() {
                 <BookOpen className="w-16 h-16 mx-auto text-gray-400 mb-4" />
                 <p className="text-gray-600 text-lg">Belum ada kajian</p>
                 <p className="text-gray-500 text-sm mt-1">
-                  Klik "Tambah Kajian" untuk membuat kajian baru
+                  Klik &quot;Tambah Kajian&quot; untuk membuat kajian baru
                 </p>
               </div>
             ) : (

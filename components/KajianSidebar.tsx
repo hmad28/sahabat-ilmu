@@ -81,12 +81,13 @@ export default function KajianSidebar() {
             >
               {kajian.coverImage && (
                 <div className="relative h-32 w-full mb-2 rounded-lg overflow-hidden">
-                  <Image
-                    src={kajian.coverImage}
-                    alt={kajian.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform"
-                  />
+                    <Image
+                      src={kajian.coverImage}
+                      alt={kajian.title}
+                      fill
+                      sizes="340px"
+                      className="object-cover group-hover:scale-105 transition-transform"
+                    />
                 </div>
               )}
 

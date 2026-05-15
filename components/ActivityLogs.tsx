@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Activity,
   Filter,
@@ -15,9 +15,9 @@ import {
   Edit,
   LogIn,
   LogOut as LogOutIcon,
-  UserPlus,
   Settings,
   AlertCircle,
+  type LucideIcon,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -28,7 +28,9 @@ interface ActivityLog {
   entityType: string;
   entityId: number | null;
   description: string;
-  metadata: any;
+  metadata: {
+    changes?: Record<string, { from: unknown; to: unknown }>;
+  } | null;
   createdAt: string;
   user: {
     id: number;
@@ -38,7 +40,7 @@ interface ActivityLog {
   };
 }
 
-const actionIcons: Record<string, any> = {
+const actionIcons: Record<string, LucideIcon> = {
   CREATE: FileText,
   UPDATE: Edit,
   DELETE: Trash2,
@@ -70,11 +72,7 @@ export default function ActivityLogs() {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    fetchLogs();
-  }, [page, filters]);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -98,7 +96,11 @@ export default function ActivityLogs() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, page]);
+
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters({ ...filters, [key]: value });
@@ -331,7 +333,7 @@ export default function ActivityLogs() {
                         </p>
                         <div className="space-y-1">
                           {Object.entries(log.metadata.changes).map(
-                            ([key, value]: [string, any]) => (
+                            ([key, value]) => (
                               <div key={key} className="text-xs text-gray-600">
                                 <span className="font-medium">{key}:</span>{" "}
                                 <span className="text-red-600 line-through">

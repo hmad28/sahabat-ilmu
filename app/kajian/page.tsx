@@ -1,23 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import {
-  Calendar,
-  MapPin,
-  User,
-  Search,
-  Loader2,
   BookOpen,
+  Calendar,
   Filter,
+  Loader2,
+  MapPin,
+  Search,
+  User,
   X,
-  ArrowLeft,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import Image from "next/image";
-import Link from "next/link";
-import { useSession } from "next-auth/react";
+import PublicFooter from "@/components/public/PublicFooter";
+import PublicNav from "@/components/public/PublicNav";
+import SourceNotice from "@/components/public/SourceNotice";
+import EmptyState from "@/components/public/EmptyState";
 
 interface Kajian {
   id: number;
@@ -38,336 +39,257 @@ interface Kajian {
 
 type SearchFilter = "all" | "title" | "ustadz" | "author";
 
+const tracks = [
+  "Dalil ibadah",
+  "Aqidah dan tauhid",
+  "Adab dan akhlak",
+  "Tanya jawab hukum",
+];
+
+function stripHtml(html: string) {
+  if (typeof document === "undefined") return html;
+  const temp = document.createElement("div");
+  temp.innerHTML = html;
+  return temp.textContent || temp.innerText || "";
+}
+
+function getFilterLabel(filter: SearchFilter) {
+  switch (filter) {
+    case "title":
+      return "Judul";
+    case "ustadz":
+      return "Ustadz";
+    case "author":
+      return "Penulis";
+    default:
+      return "Semua";
+  }
+}
+
 export default function KajianListPage() {
   const [kajianList, setKajianList] = useState<Kajian[]>([]);
-  const [filteredList, setFilteredList] = useState<Kajian[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFilter, setSearchFilter] = useState<SearchFilter>("all");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
-  const { data: session } = useSession();
-  const router = useRouter();
 
   useEffect(() => {
+    async function fetchKajian() {
+      try {
+        const response = await fetch("/api/kajian?status=published");
+        const data = await response.json();
+        setKajianList(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error fetching kajian:", error);
+        setKajianList([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     fetchKajian();
   }, []);
 
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredList(kajianList);
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = kajianList.filter((kajian) => {
-        switch (searchFilter) {
-          case "title":
-            return kajian.title.toLowerCase().includes(query);
-          case "ustadz":
-            return kajian.ustadz?.toLowerCase().includes(query);
-          case "author":
-            return kajian.author?.name.toLowerCase().includes(query);
-          case "all":
-          default:
-            return (
-              kajian.title.toLowerCase().includes(query) ||
-              kajian.excerpt.toLowerCase().includes(query) ||
-              kajian.ustadz?.toLowerCase().includes(query) ||
-              kajian.author?.name.toLowerCase().includes(query)
-            );
-        }
-      });
-      setFilteredList(filtered);
-    }
-  }, [searchQuery, searchFilter, kajianList]);
+  const filteredList = useMemo(() => {
+    if (!searchQuery.trim()) return kajianList;
+    const query = searchQuery.toLowerCase();
 
-  const fetchKajian = async () => {
-    try {
-      const res = await fetch("/api/kajian?status=published");
-      const data = await res.json();
-      setKajianList(data);
-      setFilteredList(data);
-    } catch (error) {
-      console.error("Error fetching kajian:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const stripHtml = (html: string) => {
-    const tmp = document.createElement("DIV");
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || "";
-  };
-
-  const getFilterLabel = (filter: SearchFilter) => {
-    switch (filter) {
-      case "all":
-        return "Semua";
-      case "title":
-        return "Judul";
-      case "ustadz":
-        return "Ustadz";
-      case "author":
-        return "Penulis";
-      default:
-        return "Semua";
-    }
-  };
-
-  const getPlaceholder = () => {
-    switch (searchFilter) {
-      case "title":
-        return "Cari berdasarkan judul kajian...";
-      case "ustadz":
-        return "Cari berdasarkan nama ustadz...";
-      case "author":
-        return "Cari berdasarkan nama penulis...";
-      case "all":
-      default:
-        return "Cari kajian berdasarkan judul, ustadz, penulis, atau topik...";
-    }
-  };
+    return kajianList.filter((kajian) => {
+      const excerpt = stripHtml(kajian.excerpt).toLowerCase();
+      switch (searchFilter) {
+        case "title":
+          return kajian.title.toLowerCase().includes(query);
+        case "ustadz":
+          return kajian.ustadz?.toLowerCase().includes(query);
+        case "author":
+          return kajian.author?.name.toLowerCase().includes(query);
+        default:
+          return (
+            kajian.title.toLowerCase().includes(query) ||
+            excerpt.includes(query) ||
+            kajian.ustadz?.toLowerCase().includes(query) ||
+            kajian.author?.name.toLowerCase().includes(query)
+          );
+      }
+    });
+  }, [kajianList, searchFilter, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header - CLEANED UP VERSION */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-6">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 hover:bg-white/10 px-3 py-2 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Kembali</span>
-            </button>
+    <main className="min-h-screen bg-[#fffaf0] text-emerald-950">
+      <PublicNav />
 
-            <div className="flex items-center gap-2">
-              {!session ? (
-                <Link
-                  href="/register"
-                  className="bg-white text-emerald-600 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-white/90 transition-all flex items-center gap-2 shadow-md"
-                >
-                  <User className="w-4 h-4" />
-                  <span className="hidden sm:inline">Daftar Jadi Penulis</span>
-                  <span className="sm:hidden">Daftar</span>
-                </Link>
-              ) : (
-                <Link
-                  href="/dashboard"
-                  className="bg-white text-emerald-600 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-white/90 transition-all flex items-center gap-2 shadow-md"
-                >
-                  <User className="w-4 h-4" />
-                  <span className="hidden sm:inline">Dashboard</span>
-                  <span className="sm:hidden">Menu</span>
-                </Link>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <BookOpen className="w-10 h-10" />
+      <section className="border-b border-emerald-950/10 bg-[#f7f1df]">
+        <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 md:py-16">
+          <div className="grid gap-8 md:grid-cols-[1fr_0.8fr] md:items-end">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold">Semua Kajian</h1>
-              <p className="text-emerald-50 text-sm md:text-base mt-1">
-                Jelajahi koleksi kajian Islam kami
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-800">
+                Perpustakaan rujukan
+              </p>
+              <h1 className="mt-3 max-w-3xl text-4xl font-semibold text-emerald-950 md:text-6xl">
+                Cari kajian, ustadz, atau topik yang ingin dirujuk.
+              </h1>
+              <p className="mt-5 max-w-2xl text-base leading-8 text-emerald-950/70">
+                Halaman ini membantu menemukan konten berdasarkan judul,
+                ustadz, penulis, atau topik. Untuk hukum, dalil, dan
+                kesimpulan, tetap utamakan sumber rujukan asli.
               </p>
             </div>
+            <SourceNotice compact />
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Search Bar with Filter */}
-        <div className="mb-6">
-          <div className="max-w-3xl">
-            <div className="relative flex gap-2">
-              {/* Search Input */}
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder={getPlaceholder()}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-lg border-2 border-gray-300 text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
+      <section className="mx-auto max-w-7xl px-4 py-10 md:px-6">
+        <div className="mb-8 grid gap-3 md:grid-cols-4">
+          {tracks.map((track, index) => (
+            <div
+              key={track}
+              className="rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">
+                Topik {index + 1}
+              </p>
+              <p className="mt-3 font-semibold text-emerald-950">{track}</p>
+            </div>
+          ))}
+        </div>
 
-              {/* Filter Button */}
-              <div className="relative">
+        <div className="mb-8 rounded-3xl border border-emerald-950/10 bg-white p-4 shadow-sm md:p-5">
+          <div className="flex flex-col gap-3 md:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-900/40" />
+              <input
+                type="text"
+                placeholder="Cari judul, ustadz, penulis, atau topik..."
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="w-full rounded-2xl border border-emerald-950/10 bg-stone-50 py-3 pl-12 pr-12 text-sm text-emerald-950 outline-none transition placeholder:text-emerald-950/40 focus:border-emerald-800"
+              />
+              {searchQuery && (
                 <button
-                  onClick={() => setShowFilterMenu(!showFilterMenu)}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                    searchFilter !== "all"
-                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                      : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
-                  }`}
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-900/50"
+                  aria-label="Hapus pencarian"
                 >
-                  <Filter className="w-5 h-5" />
-                  <span className="font-medium hidden sm:inline">
-                    {getFilterLabel(searchFilter)}
-                  </span>
+                  <X className="h-5 w-5" />
                 </button>
-
-                {/* Filter Dropdown */}
-                {showFilterMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-10">
-                    <div className="p-2">
-                      {(
-                        ["all", "title", "ustadz", "author"] as SearchFilter[]
-                      ).map((filter) => (
-                        <button
-                          key={filter}
-                          onClick={() => {
-                            setSearchFilter(filter);
-                            setShowFilterMenu(false);
-                          }}
-                          className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
-                            searchFilter === filter
-                              ? "bg-emerald-100 text-emerald-700 font-medium"
-                              : "text-gray-700 hover:bg-gray-100"
-                          }`}
-                        >
-                          {getFilterLabel(filter)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
 
-            {/* Active Filter Badge */}
-            {searchFilter !== "all" && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-sm text-gray-600">Filter aktif:</span>
-                <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-sm font-medium">
-                  {getFilterLabel(searchFilter)}
-                  <button
-                    onClick={() => setSearchFilter("all")}
-                    className="hover:bg-emerald-200 rounded-full p-0.5"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              </div>
-            )}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowFilterMenu((value) => !value)}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-950/10 bg-stone-50 px-5 py-3 text-sm font-semibold text-emerald-950 md:w-auto"
+              >
+                <Filter className="h-4 w-4" />
+                {getFilterLabel(searchFilter)}
+              </button>
 
-            {/* Results Count */}
-            <p className="text-sm text-gray-600 mt-3">
-              {searchQuery ? (
-                <>
-                  Ditemukan <strong>{filteredList.length}</strong> kajian dari{" "}
-                  <strong>{kajianList.length}</strong> total kajian
-                </>
-              ) : (
-                <>
-                  Total <strong>{filteredList.length}</strong> kajian
-                </>
+              {showFilterMenu && (
+                <div className="absolute right-0 z-20 mt-2 w-52 rounded-2xl border border-emerald-950/10 bg-white p-2 shadow-xl">
+                  {(["all", "title", "ustadz", "author"] as SearchFilter[]).map(
+                    (filter) => (
+                      <button
+                        key={filter}
+                        type="button"
+                        onClick={() => {
+                          setSearchFilter(filter);
+                          setShowFilterMenu(false);
+                        }}
+                        className={`w-full rounded-xl px-4 py-2 text-left text-sm font-semibold transition ${
+                          searchFilter === filter
+                            ? "bg-emerald-950 text-white"
+                            : "text-emerald-950 hover:bg-stone-50"
+                        }`}
+                      >
+                        {getFilterLabel(filter)}
+                      </button>
+                    )
+                  )}
+                </div>
               )}
-            </p>
+            </div>
           </div>
+
+          <p className="mt-4 text-sm text-emerald-950/60">
+            Menampilkan <strong>{filteredList.length}</strong> dari{" "}
+            <strong>{kajianList.length}</strong> kajian.
+          </p>
         </div>
 
-        {/* Content */}
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="text-center">
-              <Loader2 className="w-12 h-12 animate-spin text-emerald-600 mx-auto mb-4" />
-              <p className="text-gray-600">Memuat kajian...</p>
-            </div>
+          <div className="flex items-center justify-center py-20 text-emerald-950/70">
+            <Loader2 className="mr-3 h-6 w-6 animate-spin text-emerald-800" />
+            Memuat kajian...
           </div>
         ) : filteredList.length === 0 ? (
-          <div className="text-center py-20">
-            <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {searchQuery
-                ? "Tidak ada hasil ditemukan"
-                : "Belum ada kajian tersedia"}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {searchQuery
-                ? `Tidak ada kajian yang cocok dengan "${searchQuery}" di kategori ${getFilterLabel(
-                    searchFilter
-                  ).toLowerCase()}`
-                : "Kajian akan segera ditambahkan"}
-            </p>
-            {searchQuery && (
-              <button
-                onClick={() => {
-                  setSearchQuery("");
-                  setSearchFilter("all");
-                }}
-                className="text-emerald-600 hover:text-emerald-700 font-medium"
-              >
-                Hapus pencarian
-              </button>
-            )}
-          </div>
+          <EmptyState
+            title={searchQuery ? "Tidak ada hasil" : "Belum ada kajian"}
+            description={
+              searchQuery
+                ? "Coba kata kunci lain atau hapus filter untuk melihat semua konten."
+                : "Konten yang dipublikasikan akan muncul di sini."
+            }
+          />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {filteredList.map((kajian) => (
               <Link
                 key={kajian.id}
                 href={`/kajian/${kajian.slug}`}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow group"
+                className="group overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
               >
-                {kajian.coverImage && (
-                  <div className="relative h-48 bg-gray-200">
+                <div className="relative h-52 bg-emerald-950/10">
+                  {kajian.coverImage ? (
                     <Image
                       src={kajian.coverImage}
                       alt={kajian.title}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                      className="object-cover transition duration-300 group-hover:scale-105"
                     />
-                  </div>
-                )}
+                  ) : (
+                    <div className="flex h-full items-center justify-center">
+                      <BookOpen className="h-12 w-12 text-emerald-900/35" />
+                    </div>
+                  )}
+                </div>
 
                 <div className="p-5">
-                  <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors">
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
+                      {kajian.category || "kajian"}
+                    </span>
+                    {kajian.date && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                        <Calendar className="h-3 w-3" />
+                        {format(new Date(kajian.date), "dd MMM yyyy", {
+                          locale: id,
+                        })}
+                      </span>
+                    )}
+                  </div>
+
+                  <h2 className="line-clamp-2 text-xl font-semibold leading-snug text-emerald-950 group-hover:text-emerald-800">
                     {kajian.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                  </h2>
+                  <p className="mt-3 line-clamp-3 text-sm leading-7 text-emerald-950/65">
                     {stripHtml(kajian.excerpt)}
                   </p>
 
-                  <div className="space-y-2 text-sm text-gray-500">
+                  <div className="mt-5 space-y-2 text-sm text-emerald-950/60">
                     {kajian.ustadz && (
                       <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-emerald-600" />
+                        <User className="h-4 w-4 text-emerald-800" />
                         <span className="truncate">{kajian.ustadz}</span>
-                      </div>
-                    )}
-                    {kajian.author && (
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-blue-600" />
-                        <span className="truncate">
-                          Penulis: {kajian.author.name}
-                        </span>
                       </div>
                     )}
                     {kajian.location && (
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-emerald-600" />
+                        <MapPin className="h-4 w-4 text-emerald-800" />
                         <span className="truncate">{kajian.location}</span>
-                      </div>
-                    )}
-                    {kajian.date && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-emerald-600" />
-                        <span>
-                          {format(new Date(kajian.date), "dd MMMM yyyy", {
-                            locale: id,
-                          })}
-                        </span>
                       </div>
                     )}
                   </div>
@@ -376,15 +298,9 @@ export default function KajianListPage() {
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Click outside to close filter menu */}
-      {showFilterMenu && (
-        <div
-          className="fixed inset-0 z-0"
-          onClick={() => setShowFilterMenu(false)}
-        />
-      )}
-    </div>
+      <PublicFooter />
+    </main>
   );
 }

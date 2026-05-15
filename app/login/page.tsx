@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, Loader2, BookOpen } from "lucide-react";
+import { BookOpen, Loader2, Lock, Mail } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
-import Link from "next/link";
-import Image from "next/image";
+import PublicFooter from "@/components/public/PublicFooter";
+import PublicNav from "@/components/public/PublicNav";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,8 +17,8 @@ export default function LoginPage() {
     password: "",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setLoading(true);
 
     try {
@@ -30,11 +31,11 @@ export default function LoginPage() {
       if (result?.error) {
         toast.error(result.error);
       } else if (result?.ok) {
-        toast.success("Login berhasil!");
+        toast.success("Login berhasil");
         router.push("/dashboard");
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       toast.error("Terjadi kesalahan saat login");
     } finally {
       setLoading(false);
@@ -42,119 +43,99 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4">
+    <main className="min-h-screen bg-[#fffaf0] text-emerald-950">
       <Toaster position="top-right" />
+      <PublicNav />
 
-      <div className="w-full max-w-md">
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-8 text-center">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <BookOpen className="w-8 h-8 text-emerald-600" />
+      <section className="mx-auto grid min-h-[calc(100vh-73px)] max-w-7xl gap-8 px-4 py-10 md:grid-cols-[0.9fr_1.1fr] md:items-center md:px-6">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-800">
+            Masuk dashboard
+          </p>
+          <h1 className="mt-3 max-w-2xl text-4xl font-semibold leading-tight md:text-6xl">
+            Kelola konten rujukan dengan rapi.
+          </h1>
+          <p className="mt-5 max-w-xl text-base leading-8 text-emerald-950/70">
+            Dashboard dipakai penulis untuk mengelola kajian dan menjaga arsip
+            rujukan tetap mudah ditemukan.
+          </p>
+          <div className="mt-8 rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-sm">
+            <div className="flex items-start gap-3">
+              <BookOpen className="mt-1 h-5 w-5 text-emerald-800" />
+              <p className="text-sm leading-7 text-emerald-950/65">
+                Halaman publik tetap bisa dipakai tanpa login. Login hanya untuk
+                penulis dan pengelola konten.
+              </p>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">
-              Sahabat Ilmu Dashboard
-            </h1>
-            <p className="text-emerald-50 text-sm">
-              Masuk untuk mengelola konten kajian
+          </div>
+        </div>
+
+        <div className="mx-auto w-full max-w-md rounded-[2rem] border border-emerald-950/10 bg-white p-6 shadow-2xl shadow-emerald-950/10 md:p-8">
+          <div className="mb-7">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-950 text-white">
+              <Lock className="h-5 w-5" />
+            </div>
+            <h2 className="text-2xl font-semibold">Masuk</h2>
+            <p className="mt-2 text-sm text-emerald-950/60">
+              Gunakan akun penulis Sahabat Ilmu.
             </p>
           </div>
 
-          {/* Form */}
-          <div className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-900"
-                    placeholder="email@example.com"
-                  />
-                </div>
-              </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">Email</span>
+              <span className="relative block">
+                <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-900/35" />
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(event) =>
+                    setFormData({ ...formData, email: event.target.value })
+                  }
+                  className="w-full rounded-2xl border border-emerald-950/10 bg-stone-50 py-3 pl-12 pr-4 text-sm outline-none transition focus:border-emerald-800"
+                  placeholder="email@example.com"
+                />
+              </span>
+            </label>
 
-              {/* Password */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-900"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">Password</span>
+              <span className="relative block">
+                <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-900/35" />
+                <input
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={(event) =>
+                    setFormData({ ...formData, password: event.target.value })
+                  }
+                  className="w-full rounded-2xl border border-emerald-950/10 bg-stone-50 py-3 pl-12 pr-4 text-sm outline-none transition focus:border-emerald-800"
+                  placeholder="Masukkan password"
+                />
+              </span>
+            </label>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold py-3 rounded-xl hover:from-emerald-700 hover:to-teal-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Memproses...
-                  </>
-                ) : (
-                  "Masuk"
-                )}
-              </button>
-            </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-900 disabled:bg-stone-300"
+            >
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              Masuk dashboard
+            </button>
+          </form>
 
-            {/* Register Link */}
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Belum punya akun?{" "}
-                <Link
-                  href="/register"
-                  className="font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
-                >
-                  Daftar sekarang
-                </Link>
-              </p>
-            </div>
-
-            {/* Back to Home */}
-            <div className="mt-4 text-center">
-              <Link
-                href="/"
-                className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                ← Kembali ke beranda
-              </Link>
-            </div>
-          </div>
+          <p className="mt-6 text-center text-sm text-emerald-950/60">
+            Belum punya akun?{" "}
+            <Link href="/register" className="font-semibold text-emerald-800">
+              Daftar sebagai penulis
+            </Link>
+          </p>
         </div>
+      </section>
 
-        {/* Footer Info */}
-        <div className="mt-6 text-center text-sm text-gray-600 bg-white/50 backdrop-blur-sm rounded-xl p-4">
-          <p>🔐 Login menggunakan email dan password Anda</p>
-        </div>
-      </div>
-    </div>
+      <PublicFooter />
+    </main>
   );
 }

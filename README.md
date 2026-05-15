@@ -85,7 +85,7 @@ NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-nextauth-secret-key-here"
 
 # Google AI API
-GOOGLE_AI_API_KEY="your-google-ai-api-key"
+GEMINI_API_KEY="your-google-ai-api-key"
 
 # UploadThing Configuration
 UPLOADTHING_SECRET="your-uploadthing-secret"
@@ -254,7 +254,7 @@ Pastikan semua environment variables sudah diset di platform hosting:
 - `DATABASE_URL`
 - `NEXTAUTH_URL` (ganti dengan domain production)
 - `NEXTAUTH_SECRET`
-- `GOOGLE_AI_API_KEY`
+- `GEMINI_API_KEY`
 - `UPLOADTHING_SECRET`
 - `UPLOADTHING_APP_ID`
 

@@ -1,7 +1,7 @@
 // components/AdminTable.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Users,
   Search,
@@ -26,7 +26,6 @@ interface AdminUser {
 
 export default function AdminTable() {
   const [adminList, setAdminList] = useState<AdminUser[]>([]);
-  const [filteredList, setFilteredList] = useState<AdminUser[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -34,9 +33,16 @@ export default function AdminTable() {
     fetchAdmins();
   }, []);
 
-  useEffect(() => {
-    filterAdmins();
-  }, [searchQuery, adminList]);
+  const filteredList = useMemo(() => {
+    if (!searchQuery.trim()) return adminList;
+
+    const query = searchQuery.toLowerCase();
+    return adminList.filter(
+      (admin) =>
+        admin.name.toLowerCase().includes(query) ||
+        admin.email.toLowerCase().includes(query)
+    );
+  }, [adminList, searchQuery]);
 
   const fetchAdmins = async () => {
     setLoading(true);
@@ -49,28 +55,12 @@ export default function AdminTable() {
 
       const data = await res.json();
       setAdminList(data);
-      setFilteredList(data);
     } catch (error) {
       console.error("Fetch error:", error);
       toast.error("Gagal memuat data admin");
     } finally {
       setLoading(false);
     }
-  };
-
-  const filterAdmins = () => {
-    if (!searchQuery.trim()) {
-      setFilteredList(adminList);
-      return;
-    }
-
-    const query = searchQuery.toLowerCase();
-    const filtered = adminList.filter(
-      (admin) =>
-        admin.name.toLowerCase().includes(query) ||
-        admin.email.toLowerCase().includes(query)
-    );
-    setFilteredList(filtered);
   };
 
   if (loading) {

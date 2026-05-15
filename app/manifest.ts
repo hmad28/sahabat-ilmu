@@ -5,15 +5,15 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Sahabat Ilmu - Platform Pembelajaran Islam",
     short_name: "Sahabat Ilmu",
     description:
-      "Platform pembelajaran Islam modern berbasis AI dengan chatbot untuk tanya jawab kajian Islam",
+      "Platform belajar Islam dengan ringkasan AI dari Yufid.com dan tautan sumber untuk dibaca langsung",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
-    theme_color: "#10b981",
+    theme_color: "#fffaf0",
     orientation: "portrait",
     icons: [
       {
-        src: "images/192x192-icon-sahabat-ilmu.png/",
+        src: "/images/192x192-icon-sahabat-ilmu.png",
         sizes: "192x192",
         type: "image/png",
         // purpose: "any maskable",

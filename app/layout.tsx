@@ -17,15 +17,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   // Basic Metadata
   title: {
-    default: "Sahabat Ilmu - Platform Pembelajaran Islam Berbasis AI",
+    default: "Sahabat Ilmu - Cari Dalil dan Ilmu dengan Rujukan",
     template: "%s | Sahabat Ilmu",
   },
   description:
-    "Platform pembelajaran Islam modern berbasis AI. Tanya jawab seputar kajian Islam, ilmu agama, dan belajar dengan chatbot AI Islami yang terpercaya. Sumber ilmu Islam yang sahih dan mudah dipahami.",
+    "Sahabat Ilmu membantu mencari dalil, kajian, dan pengetahuan agama melalui ringkasan AI dari Yufid.com dan tautan sumber untuk dibaca langsung.",
 
   // Keywords untuk SEO (meski tidak terlalu berpengaruh, tetap bagus untuk dokumentasi)
   keywords: [
     "kajian islam",
+    "cari dalil islam",
     "belajar islam online",
     "chatbot islam",
     "tanya jawab islam",
@@ -76,9 +77,9 @@ export const metadata: Metadata = {
     locale: "id_ID",
     url: "https://sahabat-ilmu.vercel.app",
     siteName: "Sahabat Ilmu",
-    title: "Sahabat Ilmu - Platform Pembelajaran Islam Berbasis AI",
+    title: "Sahabat Ilmu - Cari Dalil dan Ilmu dengan Rujukan",
     description:
-      "Platform pembelajaran Islam modern berbasis AI. Tanya jawab seputar kajian Islam, ilmu agama, dan belajar dengan chatbot AI Islami yang terpercaya.",
+      "Cari dalil, kajian, dan pengetahuan agama melalui ringkasan AI dari Yufid.com dan tautan sumber untuk dibaca langsung.",
     images: [
       {
         url: "/images/1200x630-sahabat-ilmu.png",
@@ -93,9 +94,9 @@ export const metadata: Metadata = {
   // Twitter Card
   twitter: {
     card: "summary_large_image",
-    title: "Sahabat Ilmu - Platform Pembelajaran Islam Berbasis AI",
+    title: "Sahabat Ilmu - Cari Dalil dan Ilmu dengan Rujukan",
     description:
-      "Platform pembelajaran Islam modern berbasis AI. Tanya jawab seputar kajian Islam dengan chatbot AI Islami yang terpercaya.",
+      "Cari dalil, kajian, dan pengetahuan agama melalui ringkasan AI dari Yufid.com dan tautan sumber untuk dibaca langsung.",
     images: ["/images/1200x630-sahabat-ilmu.png"],
     creator: "@sahabatilmu",
     site: "@sahabatilmu",
@@ -135,7 +136,7 @@ export const metadata: Metadata = {
   // Icons
   icons: {
     icon: [
-      { url: "/app/favicon.ico" },
+      { url: "/favicon.ico" },
       {
         url: "/images/16x16-icon-sahabat-ilmu.png",
         sizes: "16x16",
@@ -159,7 +160,7 @@ export const metadata: Metadata = {
   },
 
   // Manifest (PWA)
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
 
   // Other metadata
   metadataBase: new URL("https://sahabat-ilmu.vercel.app"),
@@ -181,35 +182,35 @@ export default function RootLayout({
     <html lang="id">
       <head>
         {/* Additional SEO Tags */}
-        <meta name="theme-color" content="#10b981" />
+        <meta name="theme-color" content="#fffaf0" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
         <meta
           property="og:title"
-          content="Sahabat Ilmu - Platform Pembelajaran Islam Berbasis AI"
+          content="Sahabat Ilmu - Cari Dalil dan Ilmu dengan Rujukan"
         />
         <meta
           property="og:description"
-          content="Platform pembelajaran Islam modern berbasis AI. Tanya jawab seputar kajian Islam, ilmu agama, dan belajar dengan chatbot AI Islami yang terpercaya. Sumber ilmu Islam yang sahih dan mudah dipahami."
+          content="Cari dalil, kajian, dan pengetahuan agama melalui ringkasan AI dari Yufid.com dan tautan sumber untuk dibaca langsung."
         />
-        <meta property="og:image" content="images/1200x630-sahabat-ilmu.png" />
+        <meta property="og:image" content="/images/1200x630-sahabat-ilmu.png" />
         <meta property="og:url" content="https://sahabat-ilmu.vercel.app/" />
 
         {/* <!-- Twitter --> */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:title"
-          content="Sahabat Ilmu - Platform Pembelajaran Islam Berbasis AI"
+          content="Sahabat Ilmu - Cari Dalil dan Ilmu dengan Rujukan"
         />
         <meta
           name="twitter:description"
-          content="Platform pembelajaran Islam modern berbasis AI. Tanya jawab seputar kajian Islam, ilmu agama, dan belajar dengan chatbot AI Islami yang terpercaya. Sumber ilmu Islam yang sahih dan mudah dipahami."
+          content="Cari dalil, kajian, dan pengetahuan agama melalui ringkasan AI dari Yufid.com dan tautan sumber untuk dibaca langsung."
         />
         <meta
           name="twitter:image"
-          content="images/1200x630-sahabat-ilmu.png"
+          content="/images/1200x630-sahabat-ilmu.png"
         />
 
         {/* Preconnect to external domains for performance */}
@@ -232,7 +233,7 @@ export default function RootLayout({
               "@type": "EducationalOrganization",
               name: "Sahabat Ilmu",
               description:
-                "Platform pembelajaran Islam modern berbasis AI dengan chatbot untuk tanya jawab kajian Islam",
+                "Platform pencarian dalil, kajian, dan pengetahuan agama dengan ringkasan AI dari Yufid.com dan tautan sumber untuk dibaca langsung",
               url: "https://sahabat-ilmu.vercel.app",
               logo: "/images/sahabat-ilmu-horizontal2.png",
               // sameAs: [

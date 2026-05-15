@@ -1,24 +1,26 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import {
-  Calendar,
-  MapPin,
-  User,
   ArrowLeft,
-  Loader2,
-  Share2,
-  Menu,
-  X,
   BookOpen,
+  Calendar,
   Heart,
+  Loader2,
+  MapPin,
+  Share2,
+  ShieldCheck,
+  User,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import Image from "next/image";
 import toast, { Toaster } from "react-hot-toast";
-import KajianSidebar from "@/components/KajianSidebar";
+import PublicFooter from "@/components/public/PublicFooter";
+import PublicNav from "@/components/public/PublicNav";
+import SourceNotice from "@/components/public/SourceNotice";
 
 interface Kajian {
   id: number;
@@ -41,365 +43,295 @@ interface Kajian {
   };
 }
 
+function sanitizeKajianHtml(html: string) {
+  if (typeof document === "undefined") return html;
+  const template = document.createElement("template");
+  template.innerHTML = html;
+
+  template.content
+    .querySelectorAll("script, style, iframe, object, embed")
+    .forEach((node) => node.remove());
+
+  template.content.querySelectorAll("*").forEach((node) => {
+    Array.from(node.attributes).forEach((attribute) => {
+      const name = attribute.name.toLowerCase();
+      const value = attribute.value.trim().toLowerCase();
+      if (name.startsWith("on") || value.startsWith("javascript:")) {
+        node.removeAttribute(attribute.name);
+      }
+    });
+  });
+
+  return template.innerHTML;
+}
+
 export default function KajianDetailPage() {
   const params = useParams();
   const router = useRouter();
   const slug = params.slug as string;
-
   const [kajian, setKajian] = useState<Kajian | null>(null);
-  const [loading, setLoading] = useState(true);
   const [relatedKajian, setRelatedKajian] = useState<Kajian[]>([]);
-  const [showSidebar, setShowSidebar] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (slug) {
-      fetchKajian();
-      fetchRelatedKajian();
-    }
-  }, [slug]);
+    async function fetchData() {
+      try {
+        const [detailResponse, listResponse] = await Promise.all([
+          fetch(`/api/kajian/slug/${slug}`),
+          fetch("/api/kajian?status=published"),
+        ]);
 
-  const fetchKajian = async () => {
-    try {
-      const res = await fetch(`/api/kajian/slug/${slug}`);
-      if (!res.ok) {
-        if (res.status === 404) {
-          toast.error("Kajian tidak ditemukan");
-          router.push("/");
-          return;
+        if (!detailResponse.ok) {
+          if (detailResponse.status === 404) {
+            toast.error("Kajian tidak ditemukan");
+            router.push("/kajian");
+            return;
+          }
+          throw new Error("Failed to fetch kajian");
         }
-        throw new Error("Failed to fetch");
-      }
-      const data = await res.json();
-      setKajian(data);
-    } catch (error) {
-      console.error("Error fetching kajian:", error);
-      toast.error("Gagal memuat kajian");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const fetchRelatedKajian = async () => {
-    try {
-      const res = await fetch("/api/kajian?status=published");
-      const data = await res.json();
-      // Get 3 random related kajian
-      const filtered = data.filter((k: Kajian) => k.slug !== slug);
-      const shuffled = filtered.sort(() => 0.5 - Math.random());
-      setRelatedKajian(shuffled.slice(0, 3));
-    } catch (error) {
-      console.error("Error fetching related kajian:", error);
+        const detail = await detailResponse.json();
+        setKajian(detail);
+
+        const list = await listResponse.json();
+        if (Array.isArray(list)) {
+          setRelatedKajian(
+            list.filter((item: Kajian) => item.slug !== slug).slice(0, 3)
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching kajian:", error);
+        toast.error("Gagal memuat kajian");
+      } finally {
+        setLoading(false);
+      }
     }
-  };
+
+    if (slug) fetchData();
+  }, [router, slug]);
 
   const handleShare = async () => {
     const url = window.location.href;
-    if (navigator.share) {
+    if (navigator.share && kajian) {
       try {
         await navigator.share({
-          title: kajian?.title,
-          text: kajian?.excerpt,
-          url: url,
+          title: kajian.title,
+          text: kajian.excerpt,
+          url,
         });
-      } catch (error) {
-        console.log("Share cancelled");
+      } catch {
+        return;
       }
     } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(url);
-      toast.success("Link berhasil disalin!");
+      await navigator.clipboard.writeText(url);
+      toast.success("Link kajian disalin");
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 md:w-12 md:h-12 animate-spin text-emerald-600 mx-auto mb-4" />
-          <p className="text-sm md:text-base text-gray-600">Memuat kajian...</p>
+      <main className="min-h-screen bg-[#fffaf0] text-emerald-950">
+        <PublicNav />
+        <div className="flex min-h-[70vh] items-center justify-center">
+          <Loader2 className="mr-3 h-6 w-6 animate-spin text-emerald-800" />
+          <span className="text-emerald-950/70">Memuat kajian...</span>
         </div>
-      </div>
+        <PublicFooter />
+      </main>
     );
   }
 
   if (!kajian) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="text-center">
-          <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
-            Kajian tidak ditemukan
-          </h2>
-          <button
-            onClick={() => router.push("/")}
-            className="text-sm md:text-base text-emerald-600 hover:text-emerald-700"
-          >
-            Kembali ke beranda
-          </button>
+      <main className="min-h-screen bg-[#fffaf0] text-emerald-950">
+        <PublicNav />
+        <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-4 text-center">
+          <BookOpen className="mb-4 h-12 w-12 text-emerald-900/35" />
+          <h1 className="text-2xl font-semibold">Kajian tidak ditemukan</h1>
+          <Link href="/kajian" className="mt-4 font-semibold text-emerald-800">
+            Kembali ke daftar kajian
+          </Link>
         </div>
-      </div>
+        <PublicFooter />
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <main className="min-h-screen bg-[#fffaf0] text-emerald-950">
       <Toaster position="top-right" />
+      <PublicNav />
 
-      {/* Header */}
-      <div className="bg-white shadow-sm sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-3 md:px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-2">
+      <div className="border-b border-emerald-950/10 bg-[#f7f1df]">
+        <div className="mx-auto max-w-7xl px-4 py-5 md:px-6">
+          <div className="flex items-center justify-between gap-3">
             <button
+              type="button"
               onClick={() => router.back()}
-              className="flex items-center gap-1.5 md:gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-950/10 bg-white px-4 py-2 text-sm font-semibold text-emerald-950"
             >
-              <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
-              <span className="font-medium text-sm md:text-base">Kembali</span>
+              <ArrowLeft className="h-4 w-4" />
+              Kembali
             </button>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleShare}
-                className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors text-sm md:text-base"
-              >
-                <Share2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="font-medium hidden sm:inline">Bagikan</span>
-              </button>
-
-              <button
-                onClick={() => setShowSidebar(!showSidebar)}
-                className="lg:hidden bg-emerald-50 text-emerald-700 text-xs px-3 py-2 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1.5"
-              >
-                <Menu className="w-4 h-4" />
-                <span className="hidden sm:inline">Kajian</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleShare}
+              className="inline-flex items-center gap-2 rounded-full bg-emerald-950 px-4 py-2 text-sm font-semibold text-white"
+            >
+              <Share2 className="h-4 w-4" />
+              Bagikan
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Main Content with Sidebar */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Article Content */}
-        <div className="flex-1 overflow-y-auto">
-          <article className="max-w-4xl mx-auto px-3 md:px-4 py-4 md:py-8">
-            {/* Cover Image */}
-            {kajian.coverImage && (
-              <div className="relative h-48 sm:h-64 md:h-80 lg:h-96 w-full mb-4 md:mb-8 rounded-xl md:rounded-2xl overflow-hidden shadow-lg">
-                <Image
-                  src={kajian.coverImage}
-                  alt={kajian.title}
-                  fill
-                  className="object-cover"
-                  priority
-                />
+      <article className="mx-auto grid max-w-7xl gap-8 px-4 py-8 md:grid-cols-[minmax(0,1fr)_340px] md:px-6 md:py-12">
+        <div>
+          {kajian.coverImage && (
+            <div className="relative mb-6 h-64 overflow-hidden rounded-[2rem] bg-emerald-950/10 shadow-lg md:h-[430px]">
+              <Image
+                src={kajian.coverImage}
+                alt={kajian.title}
+                fill
+                sizes="(min-width: 768px) calc(100vw - 420px), 100vw"
+                priority
+                className="object-cover"
+              />
+            </div>
+          )}
+
+          <div className="rounded-[2rem] border border-emerald-950/10 bg-white p-5 shadow-sm md:p-8">
+            <p className="mb-4 inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-900">
+              {kajian.category || "kajian"}
+            </p>
+            <h1 className="text-3xl font-semibold leading-tight text-emerald-950 md:text-5xl">
+              {kajian.title}
+            </h1>
+
+            <div className="mt-6 flex flex-wrap gap-3 border-b border-emerald-950/10 pb-6 text-sm text-emerald-950/65">
+              {kajian.ustadz && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2">
+                  <User className="h-4 w-4 text-emerald-800" />
+                  {kajian.ustadz}
+                </span>
+              )}
+              {kajian.location && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2">
+                  <MapPin className="h-4 w-4 text-emerald-800" />
+                  {kajian.location}
+                </span>
+              )}
+              {kajian.date && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2">
+                  <Calendar className="h-4 w-4 text-emerald-800" />
+                  {format(new Date(kajian.date), "dd MMMM yyyy", {
+                    locale: id,
+                  })}
+                </span>
+              )}
+            </div>
+
+            <div className="my-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm leading-7 text-amber-950">
+              <div className="mb-2 flex items-center gap-2 font-semibold">
+                <ShieldCheck className="h-4 w-4" />
+                Baca dengan adab sumber
               </div>
-            )}
+              Ringkasan dan konten di halaman ini berasal dari data kajian yang
+              dipublikasikan. Untuk kesimpulan agama, dalil, dan rincian hukum,
+              buka sumber rujukan terkait dan jangan berhenti di tampilan web.
+            </div>
 
-            {/* Title & Meta */}
-            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 lg:p-8 mb-4 md:mb-8">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 md:mb-4 leading-tight">
-                {kajian.title}
-              </h1>
+            <p className="mb-7 border-l-4 border-emerald-800 bg-emerald-50 py-4 pl-4 text-base leading-8 text-emerald-950/75">
+              {kajian.excerpt}
+            </p>
 
-              <div className="flex flex-wrap gap-3 md:gap-4 text-xs md:text-sm text-gray-600 mb-4 md:mb-6 pb-4 md:pb-6 border-b">
-                {kajian.ustadz && (
-                  <div className="flex items-center gap-1.5 md:gap-2">
-                    <User className="w-4 h-4 md:w-5 md:h-5 text-emerald-600 flex-shrink-0" />
-                    <span className="font-medium">{kajian.ustadz}</span>
-                  </div>
-                )}
+            <div
+              className="prose prose-stone max-w-none kajian-content prose-headings:text-emerald-950 prose-a:text-emerald-800"
+              dangerouslySetInnerHTML={{ __html: sanitizeKajianHtml(kajian.content) }}
+            />
 
-                {kajian.location && (
-                  <div className="flex items-center gap-1.5 md:gap-2">
-                    <MapPin className="w-4 h-4 md:w-5 md:h-5 text-emerald-600 flex-shrink-0" />
-                    <span className="line-clamp-1">{kajian.location}</span>
+            <div className="mt-8 flex items-center gap-2 border-t border-emerald-950/10 pt-6 text-sm font-semibold text-emerald-950/75">
+              Baarakallahu fiikum
+              <Heart className="h-4 w-4 text-red-700" />
+            </div>
+          </div>
+
+          {kajian.gallery && kajian.gallery.length > 0 && (
+            <section className="mt-6 rounded-[2rem] border border-emerald-950/10 bg-white p-5 shadow-sm md:p-8">
+              <h2 className="text-2xl font-semibold text-emerald-950">Galeri</h2>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {kajian.gallery.map((url, index) => (
+                  <div
+                    key={url}
+                    className="relative h-56 overflow-hidden rounded-2xl bg-emerald-950/10"
+                  >
+                    <Image
+                      src={url}
+                      alt={`Galeri kajian ${index + 1}`}
+                      fill
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      className="object-cover"
+                    />
                   </div>
-                )}
-                {kajian.date && (
-                  <div className="flex items-center gap-1.5 md:gap-2">
-                    <Calendar className="w-4 h-4 md:w-5 md:h-5 text-emerald-600 flex-shrink-0" />
-                    <span>
-                      {format(new Date(kajian.date), "dd MMMM yyyy", {
-                        locale: id,
-                      })}
-                    </span>
-                  </div>
-                )}
+                ))}
               </div>
+            </section>
+          )}
+        </div>
 
-              {/* Excerpt */}
-              <div className="bg-emerald-50 border-l-4 border-emerald-600 p-3 md:p-4 rounded-r-lg mb-4 md:mb-6">
-                <p className="text-sm md:text-base text-gray-700 leading-relaxed italic">
-                  {kajian.excerpt}
+        <aside className="space-y-5">
+          <SourceNotice compact />
+
+          <div className="rounded-[2rem] border border-emerald-950/10 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">
+              Penulis
+            </p>
+            <div className="mt-4 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-950 text-white">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-semibold text-emerald-950">
+                  {kajian.author?.name || "Sahabat Ilmu"}
+                </p>
+                <p className="text-sm text-emerald-950/55">
+                  Konten terpublikasi
                 </p>
               </div>
-
-              {/* Content */}
-              <div
-                className="prose prose-sm sm:prose-base md:prose-lg max-w-none kajian-content"
-                dangerouslySetInnerHTML={{ __html: kajian.content }}
-              />
-
-              <span className="flex justify-start items-center gap-2 text-sm md:text-base text-gray-700">
-                Baarakallahu Fiikum
-                <Heart className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0 text-red-600" />
-              </span>
-
-              {/* Author */}
-              <div className="w-full flex justify-start border-t-1 border-gray-200 pt-4 mt-4">
-                {kajian.author && (
-                  <div className="flex justify-start items-center rounded-xl py-1 px-3 gap-1.5 md:gap-2 bg-emerald-600 text-xs md:text-sm">
-                    <BookOpen className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
-                    <span className="font-medium">
-                      Oleh: {kajian.author.name}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Gallery */}
-            {kajian.gallery && kajian.gallery.length > 0 && (
-              <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 lg:p-8 mb-4 md:mb-8">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center gap-2">
-                  <span className="w-1 h-6 md:h-8 bg-emerald-600 rounded"></span>
-                  Gallery
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                  {kajian.gallery.map((url, i) => (
-                    <div
-                      key={i}
-                      className="relative h-48 sm:h-56 md:h-64 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow group"
-                    >
-                      <Image
-                        src={url}
-                        alt={`Gallery ${i + 1}`}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Related Kajian */}
-            {relatedKajian.length > 0 && (
-              <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 lg:p-8">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center gap-2">
-                  <span className="w-1 h-6 md:h-8 bg-emerald-600 rounded"></span>
-                  Kajian Terkait
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                  {relatedKajian.map((related) => (
-                    <div
-                      key={related.id}
-                      onClick={() => router.push(`/kajian/${related.slug}`)}
-                      className="cursor-pointer group hover:shadow-lg transition-all rounded-lg overflow-hidden border border-gray-200 hover:border-emerald-200"
-                    >
-                      {related.coverImage && (
-                        <div className="relative h-36 sm:h-40 w-full bg-gray-200">
-                          <Image
-                            src={related.coverImage}
-                            alt={related.title}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform"
-                          />
-                        </div>
-                      )}
-                      <div className="p-3 md:p-4">
-                        <h3 className="font-bold text-sm md:text-base text-gray-900 mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors">
-                          {related.title}
-                        </h3>
-                        <p className="text-xs md:text-sm text-gray-600 line-clamp-2">
-                          {related.excerpt}
-                        </p>
-                        {related.date && (
-                          <div className="flex items-center gap-1 text-[10px] md:text-xs text-gray-500 mt-2">
-                            <Calendar className="w-3 h-3" />
-                            {format(new Date(related.date), "dd MMM yyyy", {
-                              locale: id,
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </article>
-        </div>
-
-        {/* Sidebar Kajian - Desktop */}
-        <div className="hidden lg:flex justify-center items-start border-l bg-gray-50 px-3 md:px-4 py-4 md:py-8 overflow-y-auto md:w-88.5 2xl:w-100">
-          <KajianSidebar />
-        </div>
-      </div>
-
-      {/* Mobile Sidebar Overlay */}
-      {showSidebar && (
-        <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50 animate-fade-in">
-          <div className="absolute right-0 top-0 h-full w-full sm:w-80 bg-white shadow-xl overflow-hidden animate-slide-in">
-            <div className="flex flex-col h-full">
-              <div className="flex justify-between items-center p-4 border-b bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
-                <h3 className="font-bold text-lg md:text-xl">Daftar Kajian</h3>
-                <button
-                  onClick={() => setShowSidebar(false)}
-                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-4">
-                <KajianSidebar />
-              </div>
             </div>
           </div>
-        </div>
-      )}
 
-      <style jsx global>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
+          {relatedKajian.length > 0 && (
+            <div className="rounded-[2rem] border border-emerald-950/10 bg-white p-5 shadow-sm">
+              <h2 className="text-lg font-semibold text-emerald-950">
+                Lanjut baca
+              </h2>
+              <div className="mt-4 space-y-3">
+                {relatedKajian.map((related) => (
+                  <Link
+                    key={related.id}
+                    href={`/kajian/${related.slug}`}
+                    className="block rounded-2xl border border-emerald-950/10 p-3 transition hover:border-emerald-800/30 hover:bg-stone-50"
+                  >
+                    <p className="line-clamp-2 text-sm font-semibold leading-6 text-emerald-950">
+                      {related.title}
+                    </p>
+                    {related.date && (
+                      <p className="mt-2 text-xs text-emerald-950/55">
+                        {format(new Date(related.date), "dd MMM yyyy", {
+                          locale: id,
+                        })}
+                      </p>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </aside>
+      </article>
 
-        @keyframes slide-in {
-          from {
-            transform: translateX(100%);
-          }
-          to {
-            transform: translateX(0);
-          }
-        }
-
-        .animate-fade-in {
-          animation: fade-in 0.2s ease-out;
-        }
-
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
-        }
-
-        .line-clamp-1 {
-          display: -webkit-box;
-          -webkit-line-clamp: 1;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      `}</style>
-    </div>
+      <PublicFooter />
+    </main>
   );
 }

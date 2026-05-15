@@ -24,11 +24,39 @@ import {
   AlignCenter,
   AlignRight,
 } from "lucide-react";
-import { useCallback } from "react";
+import { ReactNode, useCallback } from "react";
 
 interface RichTextEditorProps {
   content: string;
   onChange: (content: string) => void;
+}
+
+function ToolbarButton({
+  onClick,
+  active,
+  disabled,
+  children,
+  title,
+}: {
+  onClick: () => void;
+  active?: boolean;
+  disabled?: boolean;
+  children: ReactNode;
+  title: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`p-2 rounded hover:bg-gray-200 transition-colors ${
+        active ? "bg-gray-300 text-blue-600" : "text-gray-700"
+      } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+    >
+      {children}
+    </button>
+  );
 }
 
 export default function RichTextEditor({
@@ -83,32 +111,6 @@ export default function RichTextEditor({
   }, [editor]);
 
   if (!editor) return null;
-
-  const ToolbarButton = ({
-    onClick,
-    active,
-    disabled,
-    children,
-    title,
-  }: {
-    onClick: () => void;
-    active?: boolean;
-    disabled?: boolean;
-    children: React.ReactNode;
-    title: string;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-        active ? "bg-gray-300 text-blue-600" : "text-gray-700"
-      } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-    >
-      {children}
-    </button>
-  );
 
   return (
     <div className="border-2 border-gray-300 rounded-xl overflow-hidden bg-white">

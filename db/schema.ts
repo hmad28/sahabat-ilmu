@@ -9,6 +9,7 @@ import {
   json,
   pgEnum,
   integer,
+  index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
@@ -21,11 +22,31 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  password: varchar("password", { length: 255 }).notNull(),
+  password: varchar("password", { length: 255 }),
   role: roleEnum("role").default("AUTHOR").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// Tabel OTP login email
+export const loginOtpCodes = pgTable(
+  "login_otp_codes",
+  {
+    id: serial("id").primaryKey(),
+    email: varchar("email", { length: 255 }).notNull(),
+    codeHash: varchar("code_hash", { length: 255 }).notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    consumedAt: timestamp("consumed_at"),
+    attempts: integer("attempts").default(0).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("login_otp_codes_email_created_at_idx").on(
+      table.email,
+      table.createdAt
+    ),
+  ]
+);
 
 // Tabel Kajian (Updated dengan authorId)
 export const kajian = pgTable("kajian", {
@@ -205,6 +226,9 @@ export type NewActivityLog = typeof activityLogs.$inferInsert;
 
 export type Feedback = typeof feedback.$inferSelect;
 export type NewFeedback = typeof feedback.$inferInsert;
+
+export type LoginOtpCode = typeof loginOtpCodes.$inferSelect;
+export type NewLoginOtpCode = typeof loginOtpCodes.$inferInsert;
 
 export type KajianComment = typeof kajianComments.$inferSelect;
 export type NewKajianComment = typeof kajianComments.$inferInsert;

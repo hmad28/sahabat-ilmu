@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -30,22 +30,30 @@ const learningPath = [
   {
     title: "Cari topik atau dalil",
     label: "Alur 01",
+    image: "/images/generated/rujukan-desk.png",
+    imageAlt: "Ilustrasi meja rujukan dengan catatan dan kaca pembesar",
     description:
       "Tulis pertanyaan dengan bahasa sendiri: hukum, ibadah, adab, aqidah, atau topik agama yang ingin dirujuk.",
   },
   {
     title: "Baca ringkasan awal",
     label: "Alur 02",
+    image: "/images/generated/source-cards.png",
+    imageAlt: "Ilustrasi kartu sumber dan ringkasan pencarian",
     description:
       "AI membantu merangkum hasil pencarian agar inti pembahasan lebih mudah dipindai.",
   },
   {
     title: "Buka rujukan asli",
     label: "Alur 03",
+    image: "/images/generated/archive-shelves.png",
+    imageAlt: "Ilustrasi rak arsip buku dan jendela geometris",
     description:
       "Setiap jawaban diarahkan ke tautan sumber agar dalil dan penjelasan bisa dicek langsung.",
   },
 ];
+
+const demoDurations = [950, 1250, 2350, 950, 1250, 2700];
 
 function stripHtml(html: string) {
   if (typeof document === "undefined") return html;
@@ -54,9 +62,129 @@ function stripHtml(html: string) {
   return temp.textContent || temp.innerText || "";
 }
 
+function TypingIndicator() {
+  return (
+    <div className="flex items-end gap-2">
+      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white text-emerald-900 shadow-sm ring-1 ring-emerald-950/10">
+        <ShieldCheck className="h-4 w-4" />
+      </div>
+      <div className="rounded-3xl rounded-bl-md border border-emerald-950/10 bg-white px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-700" />
+          <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-700 [animation-delay:120ms]" />
+          <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-700 [animation-delay:240ms]" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AssistantBubble({
+  children,
+  sourceLabel,
+}: {
+  children: ReactNode;
+  sourceLabel: string;
+}) {
+  return (
+    <div className="flex animate-[chat-pop_280ms_ease-out] items-end gap-2">
+      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white text-emerald-900 shadow-sm ring-1 ring-emerald-950/10">
+        <ShieldCheck className="h-4 w-4" />
+      </div>
+      <div className="max-w-[86%] rounded-3xl rounded-bl-md border border-emerald-950/10 bg-white px-4 py-3 shadow-sm">
+        <p className="text-sm leading-6 text-emerald-950/76">{children}</p>
+        <div className="mt-3 inline-flex rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
+          {sourceLabel}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UserBubble({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex animate-[chat-pop_260ms_ease-out] justify-end">
+      <div className="max-w-[82%] rounded-3xl rounded-br-md bg-emerald-950 px-4 py-3 text-sm leading-6 text-white shadow-sm">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function HeroChatPreview({ step }: { step: number }) {
+  return (
+    <div className="overflow-hidden rounded-[2rem] border border-emerald-950/10 bg-white shadow-2xl shadow-emerald-950/10">
+      <div className="border-b border-emerald-950/10 bg-[#f7f1df] px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-950 text-white">
+              <MessageCircle className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-emerald-950">
+                Ruang pencarian ilmu
+              </p>
+              <p className="text-xs text-emerald-950/55">
+                Ringkasan dari Yufid.com
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-full border border-emerald-950/10 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-600" />
+            Online
+          </div>
+        </div>
+      </div>
+
+      <div className="min-h-[420px] bg-[#fffaf0] p-4">
+        <div className="space-y-4">
+          {step >= 0 && <UserBubble>Dalil tentang menjaga lisan?</UserBubble>}
+
+          {step === 1 && <TypingIndicator />}
+
+          {step >= 2 && (
+            <AssistantBubble sourceLabel="3 sumber Yufid.com">
+              Aku bantu carikan rujukan dulu. Ada beberapa pembahasan yang bisa
+              kamu cek langsung dari sumber Yufid, termasuk adab menjaga lisan
+              dan bahaya ucapan.
+            </AssistantBubble>
+          )}
+
+          {step >= 3 && <UserBubble>Ringkasin inti pembahasannya.</UserBubble>}
+
+          {step === 4 && <TypingIndicator />}
+
+          {step >= 5 && (
+            <AssistantBubble sourceLabel="Buka sumber untuk detail dalil">
+              Secara ringkas, topiknya mengarah pada kehati-hatian dalam
+              berbicara. Untuk dalil dan penjelasan lengkap, buka rujukan asli
+              agar konteksnya tidak terpotong.
+            </AssistantBubble>
+          )}
+        </div>
+      </div>
+
+      <div className="border-t border-emerald-950/10 bg-white p-4">
+        <Link
+          href="/chat"
+          className="flex items-center justify-between rounded-2xl border border-emerald-950/10 bg-[#fffaf0] px-4 py-3 text-sm font-semibold text-emerald-950 transition hover:border-emerald-950/20"
+        >
+          <span className="truncate text-emerald-950/55">
+            Tulis topik agama yang ingin dicari...
+          </span>
+          <span className="ml-3 inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-emerald-950 text-white">
+            <ArrowRight className="h-4 w-4" />
+          </span>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [latestKajian, setLatestKajian] = useState<Kajian[]>([]);
   const [kajianLoading, setKajianLoading] = useState(true);
+  const [demoStep, setDemoStep] = useState(0);
 
   useEffect(() => {
     async function fetchLatestKajian() {
@@ -75,6 +203,14 @@ export default function HomePage() {
 
     fetchLatestKajian();
   }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDemoStep((currentStep) => (currentStep + 1) % demoDurations.length);
+    }, demoDurations[demoStep]);
+
+    return () => window.clearTimeout(timeout);
+  }, [demoStep]);
 
   return (
     <main className="min-h-screen bg-[#fffaf0] text-emerald-950">
@@ -129,94 +265,43 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[2rem] border border-emerald-950/10 bg-white shadow-2xl shadow-emerald-950/10">
-            <div className="border-b border-emerald-950/10 bg-[#f7f1df] px-4 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-950 text-white">
-                    <MessageCircle className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-emerald-950">
-                      Ruang pencarian ilmu
-                    </p>
-                    <p className="text-xs text-emerald-950/55">
-                      Ringkasan dari Yufid.com
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 rounded-full border border-emerald-950/10 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-600" />
-                  Live
-                </div>
-              </div>
+          <HeroChatPreview step={demoStep} />
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-8 md:px-6">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-end">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-800">
+                Kontribusi
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold text-emerald-950 md:text-3xl">
+                Bantu arsip ilmu tetap hidup.
+              </h2>
             </div>
-
-            <div className="space-y-4 bg-[#fffaf0] p-5">
-              <div className="flex justify-end">
-                <div className="max-w-[82%] rounded-3xl rounded-tr-md bg-emerald-950 px-4 py-3 text-sm leading-6 text-white shadow-sm">
-                  Dalil tentang menjaga lisan?
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white text-emerald-900 shadow-sm">
-                  <ShieldCheck className="h-4 w-4" />
-                </div>
-                <div className="rounded-3xl rounded-tl-md border border-emerald-950/10 bg-white px-4 py-3 shadow-sm">
-                  <p className="text-xs font-semibold text-amber-800">
-                    AI mencari rujukan...
-                  </p>
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-700" />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-700 [animation-delay:120ms]" />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-emerald-700 [animation-delay:240ms]" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-900">
-                  <MessageCircle className="h-4 w-4" />
-                </div>
-                <div className="max-w-[88%] rounded-3xl rounded-tl-md border border-emerald-950/10 bg-white px-4 py-3 shadow-sm">
-                  <p className="text-sm leading-6 text-emerald-950/75">
-                    Ditemukan beberapa rujukan terkait topik ini. Buka sumber
-                    asli untuk membaca dalil dan penjelasan lengkap.
-                  </p>
-                  <div className="mt-3 rounded-2xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
-                    3 sumber Yufid.com siap dibuka
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <div className="max-w-[82%] rounded-3xl rounded-tr-md bg-emerald-950 px-4 py-3 text-sm leading-6 text-white shadow-sm">
-                  Ada pembahasan tentang wudhu?
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white text-emerald-900 shadow-sm">
-                  <ShieldCheck className="h-4 w-4" />
-                </div>
-                <div className="min-w-[160px] rounded-3xl rounded-tl-md border border-emerald-950/10 bg-white px-4 py-3 shadow-sm">
-                  <div className="mb-2 h-2 w-24 animate-pulse rounded-full bg-emerald-950/20" />
-                  <div className="h-2 w-36 animate-pulse rounded-full bg-emerald-950/10" />
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-emerald-950/10 bg-white p-4">
-              <Link
-                href="/chat"
-                className="flex items-center justify-between rounded-2xl border border-emerald-950/10 bg-[#fffaf0] px-4 py-3 text-sm font-semibold text-emerald-950 transition hover:border-emerald-950/20"
-              >
-                Coba tanya di ruang chat
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
+            <Link
+              href="/register"
+              className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-900"
+            >
+              Daftar jadi penulis
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
+
+          <Link
+            href="/register"
+            className="group block overflow-hidden rounded-2xl border border-emerald-950/10 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl"
+          >
+            <Image
+              src="/images/banner1.png"
+              alt="Ajakan menjadi penulis Sahabat Ilmu"
+              width={1732}
+              height={433}
+              className="h-auto w-full transition duration-300 group-hover:scale-[1.01]"
+              sizes="(min-width: 1024px) 960px, 100vw"
+            />
+          </Link>
         </div>
       </section>
 
@@ -240,17 +325,28 @@ export default function HomePage() {
           {learningPath.map((item) => (
             <article
               key={item.title}
-              className="rounded-3xl border border-emerald-950/10 bg-white p-6 shadow-sm"
+              className="overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl"
             >
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">
-                {item.label}
-              </p>
-              <h3 className="mt-4 text-xl font-semibold text-emerald-950">
-                {item.title}
-              </h3>
-              <p className="mt-3 text-sm leading-7 text-emerald-950/65">
-                {item.description}
-              </p>
+              <div className="relative aspect-[3/2] overflow-hidden bg-[#f7f1df]">
+                <Image
+                  src={item.image}
+                  alt={item.imageAlt}
+                  fill
+                  sizes="(min-width: 768px) 33vw, 100vw"
+                  className="object-cover transition duration-300 hover:scale-105"
+                />
+              </div>
+              <div className="p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">
+                  {item.label}
+                </p>
+                <h3 className="mt-4 text-2xl font-semibold text-emerald-950">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-emerald-950/65">
+                  {item.description}
+                </p>
+              </div>
             </article>
           ))}
         </div>

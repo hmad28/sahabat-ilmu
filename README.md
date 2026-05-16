@@ -12,7 +12,7 @@ Project ini memakai Next.js App Router, PostgreSQL via Neon, Drizzle ORM, NextAu
 - Guard prompt: sapaan dan small talk dijawab lokal; sisipan teknis seperti permintaan kode dipisahkan dari pertanyaan agama sebelum request dikirim ke API.
 - Kajian: daftar kajian publik, halaman detail, metadata SEO, cover image, kategori, ustadz, lokasi, dan tanggal.
 - Dashboard admin: pengelolaan pengguna, konten, upload gambar, rich text editor, import dokumen, dan activity logs.
-- Auth: login/register berbasis credentials dengan NextAuth dan role `SUPER_ADMIN` / `AUTHOR`.
+- Auth: login/register berbasis credentials, Google OAuth, dan email OTP via Resend dengan NextAuth dan role `SUPER_ADMIN` / `AUTHOR`.
 
 ## Source Safety Chat
 
@@ -36,6 +36,7 @@ Catatan penting: kualitas sumber sangat bergantung pada `GOOGLE_CSE_API_KEY` dan
 - Neon PostgreSQL
 - NextAuth.js
 - Google Generative AI
+- Resend Email API
 - Cheerio
 - UploadThing
 - TipTap
@@ -48,6 +49,8 @@ Catatan penting: kualitas sumber sangat bergantung pada `GOOGLE_CSE_API_KEY` dan
 - Database PostgreSQL, disarankan Neon
 - Gemini API key
 - Google Custom Search API key dan Custom Search Engine ID untuk flow Yufid
+- Google OAuth Client ID/Secret untuk login Google
+- Resend API key untuk kode OTP email
 - Konfigurasi UploadThing jika fitur upload dipakai
 
 ## Instalasi
@@ -68,6 +71,12 @@ DATABASE_URL="postgresql://user:password@host/database"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="change-me"
 
+GOOGLE_CLIENT_ID="your-google-oauth-client-id"
+GOOGLE_CLIENT_SECRET="your-google-oauth-client-secret"
+
+RESEND_API_KEY="your-resend-api-key"
+EMAIL_FROM="Sahabat Ilmu <noreply@sahabatilmu.web.id>"
+
 GEMINI_API_KEY="your-gemini-api-key"
 GOOGLE_CSE_API_KEY="your-google-custom-search-api-key"
 YUFID_CSE_ID="your-yufid-custom-search-engine-id"
@@ -77,6 +86,75 @@ UPLOADTHING_TOKEN="your-uploadthing-token"
 ```
 
 Jika memakai konfigurasi UploadThing lama, sesuaikan env UploadThing dengan dashboard akun kamu.
+
+## Login Google
+
+Flow Google memakai NextAuth provider `google`.
+
+Cara ambil key:
+
+1. Buka Google Cloud Console.
+2. Buat atau pilih project.
+3. Buka `APIs & Services` > `OAuth consent screen`, isi app name, support email, dan developer contact.
+4. Buka `APIs & Services` > `Credentials` > `Create Credentials` > `OAuth client ID`.
+5. Pilih `Web application`.
+6. Tambahkan Authorized redirect URI:
+
+```text
+http://localhost:3000/api/auth/callback/google
+https://sahabatilmu.web.id/api/auth/callback/google
+```
+
+7. Copy `Client ID` ke `GOOGLE_CLIENT_ID`.
+8. Copy `Client secret` ke `GOOGLE_CLIENT_SECRET`.
+
+Rujukan resmi: https://support.google.com/cloud/answer/15549257
+
+Pastikan `NEXTAUTH_URL` sesuai domain yang sedang dipakai:
+
+```env
+NEXTAUTH_URL="http://localhost:3000"
+```
+
+Untuk production:
+
+```env
+NEXTAUTH_URL="https://sahabatilmu.web.id"
+```
+
+## Email OTP Resend
+
+Flow OTP memakai endpoint `/api/auth/otp/request`, tabel `login_otp_codes`, dan NextAuth provider `email-otp`.
+
+Cara ambil key:
+
+1. Buka Resend Dashboard.
+2. Buka `API Keys`.
+3. Klik `Create API Key`.
+4. Pilih permission untuk send email.
+5. Copy key ke `RESEND_API_KEY`.
+6. Untuk production, buka `Domains`, tambahkan domain, lalu pasang DNS record yang diminta Resend.
+7. Isi `EMAIL_FROM` dengan email dari domain yang sudah verified.
+
+Rujukan resmi:
+
+- API Keys: https://resend.com/docs/dashboard/api-keys/introduction
+- Domains: https://resend.com/docs/dashboard/domains/introduction
+
+Contoh:
+
+```env
+RESEND_API_KEY="re_xxxxxxxxx"
+EMAIL_FROM="Sahabat Ilmu <noreply@sahabatilmu.web.id>"
+```
+
+Untuk production Sahabat Ilmu, pakai:
+
+```env
+EMAIL_FROM="Sahabat Ilmu <noreply@sahabatilmu.web.id>"
+```
+
+Untuk tes awal, Resend menyediakan alamat sandbox `onboarding@resend.dev`, tapi pengiriman biasanya terbatas ke email akun Resend kamu. Production sebaiknya pakai domain verified.
 
 ## Database
 
@@ -168,6 +246,8 @@ Checklist production:
 
 - Set semua environment variables production.
 - Set `NEXTAUTH_URL` ke domain production.
+- Set Google OAuth redirect URI production.
+- Verifikasi domain Resend sebelum memakai `EMAIL_FROM` domain sendiri.
 - Pastikan database sudah terisi schema.
 - Pastikan Custom Search Engine untuk Yufid sudah benar.
 - Jalankan `npm run build` sebelum deploy jika ingin validasi lokal.
@@ -191,6 +271,8 @@ Login gagal:
 - Cek `DATABASE_URL`.
 - Cek user sudah ada di tabel `users`.
 - Cek `NEXTAUTH_SECRET`.
+- Untuk Google, cek `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, callback URL, dan `NEXTAUTH_URL`.
+- Untuk OTP email, cek `RESEND_API_KEY`, `EMAIL_FROM`, domain Resend sudah verified, dan tabel `login_otp_codes` sudah termigrasi.
 
 Upload gagal:
 

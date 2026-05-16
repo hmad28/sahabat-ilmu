@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { logActivity, formatChanges } from "@/lib/activity-logger";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function PUT(req: NextRequest) {
   try {
@@ -51,7 +51,7 @@ export async function PUT(req: NextRequest) {
 
     // Tambahkan ini
     let description = "";
-    let changes: Record<string, any> = {};
+    let changes: Record<string, { from: string; to: string }> = {};
 
     // Jika ingin mengubah password
     if (newPassword) {
@@ -62,17 +62,16 @@ export async function PUT(req: NextRequest) {
         );
       }
 
-      if (!currentPassword) {
+      if (user.password && !currentPassword) {
         return NextResponse.json(
           { error: "Password lama harus diisi" },
           { status: 400 }
         );
       }
 
-      const isPasswordValid = await bcrypt.compare(
-        currentPassword,
-        user.password
-      );
+      const isPasswordValid = user.password
+        ? await bcrypt.compare(currentPassword, user.password)
+        : true;
 
       if (!isPasswordValid) {
         return NextResponse.json(
@@ -136,6 +135,7 @@ export async function PUT(req: NextRequest) {
         name: name.trim(),
         email: user.email,
         role: user.role,
+        hasPassword: true,
       },
     });
   } catch (error) {

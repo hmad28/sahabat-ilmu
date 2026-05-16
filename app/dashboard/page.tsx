@@ -110,6 +110,7 @@ export default function DashboardPage() {
   );
 
   const isSuperAdmin = session?.user?.role === "SUPER_ADMIN";
+  const hasPassword = session?.user?.hasPassword ?? true;
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -162,7 +163,7 @@ export default function DashboardPage() {
         toast.error("Konfirmasi password tidak cocok");
         return;
       }
-      if (!profileData.currentPassword) {
+      if (hasPassword && !profileData.currentPassword) {
         toast.error("Masukkan password lama untuk mengubah password");
         return;
       }
@@ -191,6 +192,9 @@ export default function DashboardPage() {
           user: {
             ...session?.user,
             name: profileData.name,
+            hasPassword: profileData.newPassword
+              ? true
+              : session?.user?.hasPassword,
           },
         });
 
@@ -861,7 +865,7 @@ export default function DashboardPage() {
                 <div className="mb-4 flex items-center gap-2">
                   <Lock className="h-4 w-4 flex-shrink-0 text-emerald-800" />
                   <h3 className="text-sm font-semibold text-emerald-950">
-                    Ubah Password
+                    {hasPassword ? "Ubah Password" : "Buat Password"}
                   </h3>
                   <span className="text-xs text-emerald-950/50">
                     (opsional)
@@ -871,7 +875,7 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-emerald-950/75">
-                      Password Lama
+                      Password Saat Ini
                     </label>
                     <input
                       type="password"
@@ -882,8 +886,13 @@ export default function DashboardPage() {
                           currentPassword: e.target.value,
                         })
                       }
+                      disabled={!hasPassword}
                       className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2.5 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
-                      placeholder="Masukkan password lama"
+                      placeholder={
+                        hasPassword
+                          ? "Masukkan password lama"
+                          : "Belum ada password di akun ini"
+                      }
                     />
                   </div>
 

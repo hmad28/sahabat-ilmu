@@ -179,7 +179,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id">
+    <html lang="id" className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
         {/* Additional SEO Tags */}
         <meta name="theme-color" content="#fffaf0" />
@@ -272,9 +272,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className="antialiased">
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

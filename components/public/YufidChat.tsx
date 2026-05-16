@@ -143,22 +143,8 @@ function getNoSourceReply(query: string) {
   return `Belum ketemu rujukan Yufid.com yang cukup untuk: "${query}".\n\nAku belum bisa menyimpulkan jawaban agama tanpa sumber. Coba pakai kata kunci yang lebih pendek dan langsung, misalnya "hukum musik", "dalil menjaga lisan", atau "tata cara wudhu".`;
 }
 
-function getUntrustedSourceReply(query: string) {
-  return `Aku menemukan hasil pencarian, tapi sumbernya bukan dari Yufid.com, jadi tidak aku jadikan jawaban.\n\nBelum ketemu rujukan Yufid.com yang cukup untuk: "${query}". Coba pakai kata kunci yang lebih pendek atau buka pencarian Yufid.com langsung.`;
-}
-
 function combineNotice(notice: string, reply: string) {
   return notice ? `${notice}\n\n${reply}` : reply;
-}
-
-function isYufidSource(source: ChatSource) {
-  try {
-    const hostname = new URL(source.url).hostname.replace(/^www\./, "");
-    return hostname === "yufid.com" || hostname.endsWith(".yufid.com");
-  } catch {
-    const website = source.website || "";
-    return website === "yufid.com" || website.endsWith(".yufid.com");
-  }
 }
 
 function prepareMessage(message: string): PreparedMessage {
@@ -398,14 +384,9 @@ export default function YufidChat() {
         throw new Error(data?.reply || `HTTP error ${response.status}`);
       }
 
-      const rawSources: ChatSource[] = Array.isArray(data.sources) ? data.sources : [];
-      const trustedSources = rawSources.filter(isYufidSource);
-      const hasUntrustedSources = rawSources.length !== trustedSources.length;
-      const sources = hasUntrustedSources ? [] : trustedSources;
+      const sources: ChatSource[] = Array.isArray(data.sources) ? data.sources : [];
       const noSourceReply =
-        hasUntrustedSources
-          ? getUntrustedSourceReply(prepared.apiMessage)
-          : sources.length === 0 && /tidak menemukan artikel|belum menemukan/i.test(data.reply || "")
+        sources.length === 0 && /tidak menemukan artikel|belum menemukan/i.test(data.reply || "")
           ? getNoSourceReply(prepared.apiMessage)
           : data.reply;
 

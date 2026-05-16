@@ -63,138 +63,162 @@ export default function AdminTable() {
     }
   };
 
+  const superAdminCount = adminList.filter(
+    (admin) => admin.role === "SUPER_ADMIN"
+  ).length;
+  const totalKajian = adminList.reduce(
+    (sum, admin) => sum + admin.kajianCount,
+    0
+  );
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
-        <span className="ml-2 text-gray-600">Memuat data admin...</span>
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-7 w-7 animate-spin text-emerald-700" />
+        <span className="ml-2 text-sm text-emerald-950/65">
+          Memuat data admin...
+        </span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Search Bar */}
-      <div className="bg-white p-4 rounded-xl shadow-sm">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Cari berdasarkan nama atau email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-          />
+      <div className="rounded-lg border border-emerald-900/10 bg-white/80 p-4 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-emerald-950">
+              Daftar Admin
+            </h2>
+            <p className="text-sm text-emerald-950/60">
+              Lihat admin dan kontribusi kajian.
+            </p>
+          </div>
+          <div className="relative w-full md:max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-900/35" />
+            <input
+              type="text"
+              placeholder="Cari nama atau email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-md border border-emerald-900/15 bg-white py-2.5 pl-9 pr-3 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="rounded-lg border border-emerald-900/10 bg-white/80 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Total Admin</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-900/55">
+                Total Admin
+              </p>
+              <p className="mt-2 text-3xl font-semibold text-emerald-950">
                 {adminList.length}
               </p>
             </div>
-            <Users className="w-12 h-12 text-emerald-500 opacity-20" />
+            <Users className="h-10 w-10 text-emerald-800/20" />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
+        <div className="rounded-lg border border-emerald-900/10 bg-white/80 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Super Admin</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {adminList.filter((a) => a.role === "SUPER_ADMIN").length}
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-900/55">
+                Super Admin
+              </p>
+              <p className="mt-2 text-3xl font-semibold text-emerald-950">
+                {superAdminCount}
               </p>
             </div>
-            <Crown className="w-12 h-12 text-yellow-500 opacity-20" />
+            <Crown className="h-10 w-10 text-amber-600/30" />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+        <div className="rounded-lg border border-emerald-900/10 bg-white/80 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Total Kajian</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {adminList.reduce((sum, admin) => sum + admin.kajianCount, 0)}
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-900/55">
+                Total Kajian
+              </p>
+              <p className="mt-2 text-3xl font-semibold text-emerald-950">
+                {totalKajian}
               </p>
             </div>
-            <BookOpen className="w-12 h-12 text-blue-500 opacity-20" />
+            <BookOpen className="h-10 w-10 text-emerald-800/20" />
           </div>
         </div>
       </div>
 
-      {/* Table */}
       {filteredList.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl shadow-sm">
-          <Users className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-600 text-lg">
+        <div className="rounded-lg border border-emerald-900/10 bg-white/80 px-4 py-14 text-center shadow-sm">
+          <Users className="mx-auto mb-4 h-12 w-12 text-emerald-800/25" />
+          <p className="text-lg font-semibold text-emerald-950">
             {searchQuery ? "Tidak ada hasil pencarian" : "Belum ada admin"}
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          {/* Desktop Table */}
+        <div className="overflow-hidden rounded-lg border border-emerald-900/10 bg-white/85 shadow-sm">
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b-2 border-gray-200">
+              <thead className="border-b border-emerald-900/10 bg-emerald-50/70">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-[0.14em] text-emerald-900/60">
                     Admin
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-[0.14em] text-emerald-900/60">
                     Email
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-[0.14em] text-emerald-900/60">
                     Role
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-[0.14em] text-emerald-900/60">
                     Tanggal Bergabung
                   </th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-5 py-3 text-center text-xs font-bold uppercase tracking-[0.14em] text-emerald-900/60">
                     Jumlah Kajian
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-emerald-900/10">
                 {filteredList.map((admin) => (
                   <tr
                     key={admin.id}
-                    className="hover:bg-gray-50 transition-colors"
+                    className="transition-colors hover:bg-emerald-50/55"
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                          <UserIcon className="w-5 h-5 text-emerald-700" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-100">
+                          <UserIcon className="h-5 w-5 text-emerald-800" />
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-emerald-950">
                             {admin.name}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <p className="text-gray-700">{admin.email}</p>
+                    <td className="px-5 py-4">
+                      <p className="text-sm text-emerald-950/70">
+                        {admin.email}
+                      </p>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-5 py-4">
                       {admin.role === "SUPER_ADMIN" ? (
-                        <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1">
-                          <Crown className="w-3 h-3" />
+                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-900">
+                          <Crown className="h-3 w-3" />
                           SUPER ADMIN
                         </span>
                       ) : (
-                        <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
+                        <span className="rounded-md bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
                           AUTHOR
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Calendar className="w-4 h-4" />
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2 text-emerald-950/65">
+                        <Calendar className="h-4 w-4" />
                         <span className="text-sm">
                           {format(new Date(admin.createdAt), "dd MMMM yyyy", {
                             locale: id,
@@ -202,10 +226,10 @@ export default function AdminTable() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-5 py-4">
                       <div className="flex items-center justify-center gap-2">
-                        <BookOpen className="w-4 h-4 text-emerald-600" />
-                        <span className="font-semibold text-gray-900">
+                        <BookOpen className="h-4 w-4 text-emerald-700" />
+                        <span className="font-semibold text-emerald-950">
                           {admin.kajianCount}
                         </span>
                       </div>
@@ -216,40 +240,41 @@ export default function AdminTable() {
             </table>
           </div>
 
-          {/* Mobile Cards */}
-          <div className="md:hidden divide-y divide-gray-200">
+          <div className="divide-y divide-emerald-900/10 md:hidden">
             {filteredList.map((admin) => (
-              <div key={admin.id} className="p-4 hover:bg-gray-50">
+              <div key={admin.id} className="p-4 transition hover:bg-emerald-50/55">
                 <div className="flex items-start gap-3 mb-3">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <UserIcon className="w-6 h-6 text-emerald-700" />
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md bg-emerald-100">
+                    <UserIcon className="h-6 w-6 text-emerald-800" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-gray-900 mb-1">
+                    <p className="mb-1 font-semibold text-emerald-950">
                       {admin.name}
                     </p>
-                    <p className="text-sm text-gray-600 mb-2">{admin.email}</p>
+                    <p className="mb-2 text-sm text-emerald-950/65">
+                      {admin.email}
+                    </p>
                     {admin.role === "SUPER_ADMIN" ? (
-                      <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1">
-                        <Crown className="w-3 h-3" />
+                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs font-bold text-amber-900">
+                        <Crown className="h-3 w-3" />
                         SUPER ADMIN
                       </span>
                     ) : (
-                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold">
+                      <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">
                         AUTHOR
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <Calendar className="w-4 h-4" />
+                  <div className="flex items-center gap-1 text-emerald-950/65">
+                    <Calendar className="h-4 w-4" />
                     {format(new Date(admin.createdAt), "dd MMM yyyy", {
                       locale: id,
                     })}
                   </div>
                   <div className="flex items-center gap-1 text-emerald-700 font-semibold">
-                    <BookOpen className="w-4 h-4" />
+                    <BookOpen className="h-4 w-4" />
                     {admin.kajianCount} Kajian
                   </div>
                 </div>

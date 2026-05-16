@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -39,7 +39,6 @@ interface ActivityLog {
     role: string;
   };
 }
-
 const actionIcons: Record<string, LucideIcon> = {
   CREATE: FileText,
   UPDATE: Edit,
@@ -50,12 +49,12 @@ const actionIcons: Record<string, LucideIcon> = {
 };
 
 const actionColors: Record<string, string> = {
-  CREATE: "bg-green-100 text-green-700 border-green-200",
-  UPDATE: "bg-blue-100 text-blue-700 border-blue-200",
+  CREATE: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  UPDATE: "bg-amber-100 text-amber-900 border-amber-200",
   DELETE: "bg-red-100 text-red-700 border-red-200",
-  LOGIN: "bg-purple-100 text-purple-700 border-purple-200",
-  LOGOUT: "bg-gray-100 text-gray-700 border-gray-200",
-  PROFILE_UPDATE: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  LOGIN: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  LOGOUT: "bg-stone-100 text-stone-700 border-stone-200",
+  PROFILE_UPDATE: "bg-amber-50 text-amber-900 border-amber-200",
 };
 
 export default function ActivityLogs() {
@@ -124,50 +123,52 @@ export default function ActivityLogs() {
   };
 
   const getActionColor = (action: string) => {
-    return actionColors[action] || "bg-gray-100 text-gray-700 border-gray-200";
+    return (
+      actionColors[action] || "bg-stone-100 text-stone-700 border-stone-200"
+    );
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-        <div className="flex items-center justify-between mb-4">
+      <div className="rounded-lg border border-emerald-900/10 bg-white/80 p-4 shadow-sm sm:p-5">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <Activity className="w-6 h-6 text-indigo-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-900 text-amber-50">
+              <Activity className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Activity Logs</h2>
-              <p className="text-sm text-gray-500">
+              <h2 className="text-lg font-semibold text-emerald-950">
+                Log Aktivitas
+              </h2>
+              <p className="text-sm text-emerald-950/60">
                 Monitor semua aktivitas di sistem
               </p>
             </div>
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+            className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold transition ${
               showFilters
-                ? "bg-indigo-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "bg-emerald-900 text-amber-50"
+                : "border border-emerald-900/15 bg-white text-emerald-900 hover:bg-emerald-50"
             }`}
           >
-            <Filter className="w-4 h-4" />
+            <Filter className="h-4 w-4" />
             Filter
           </button>
         </div>
 
-        {/* Filters */}
         {showFilters && (
-          <div className="border-t border-gray-200 pt-4 mt-4 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="mt-4 space-y-4 border-t border-emerald-900/10 pt-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-medium text-emerald-950/75">
                   Action
                 </label>
                 <select
                   value={filters.action}
                   onChange={(e) => handleFilterChange("action", e.target.value)}
-                  className="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                 >
                   <option value="">Semua Action</option>
                   <option value="CREATE">Create</option>
@@ -180,7 +181,7 @@ export default function ActivityLogs() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-medium text-emerald-950/75">
                   Entity Type
                 </label>
                 <select
@@ -188,7 +189,7 @@ export default function ActivityLogs() {
                   onChange={(e) =>
                     handleFilterChange("entityType", e.target.value)
                   }
-                  className="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                 >
                   <option value="">Semua Entity</option>
                   <option value="kajian">Kajian</option>
@@ -199,11 +200,11 @@ export default function ActivityLogs() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-medium text-emerald-950/75">
                   Search
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-900/35" />
                   <input
                     type="text"
                     placeholder="Cari deskripsi..."
@@ -211,13 +212,13 @@ export default function ActivityLogs() {
                     onChange={(e) =>
                       handleFilterChange("search", e.target.value)
                     }
-                    className="w-full border-2 border-gray-300 rounded-lg pl-10 pr-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full rounded-md border border-emerald-900/15 bg-white py-2 pl-10 pr-3 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-medium text-emerald-950/75">
                   Start Date
                 </label>
                 <input
@@ -226,12 +227,12 @@ export default function ActivityLogs() {
                   onChange={(e) =>
                     handleFilterChange("startDate", e.target.value)
                   }
-                  className="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-medium text-emerald-950/75">
                   End Date
                 </label>
                 <input
@@ -240,14 +241,14 @@ export default function ActivityLogs() {
                   onChange={(e) =>
                     handleFilterChange("endDate", e.target.value)
                   }
-                  className="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                 />
               </div>
 
               <div className="flex items-end">
                 <button
                   onClick={resetFilters}
-                  className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                  className="w-full rounded-md border border-emerald-900/15 bg-white px-4 py-2 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50"
                 >
                   Reset Filter
                 </button>
@@ -257,52 +258,53 @@ export default function ActivityLogs() {
         )}
       </div>
 
-      {/* Logs List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-emerald-900/10 bg-white/85 shadow-sm">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-            <span className="ml-2 text-gray-600">Loading logs...</span>
+            <Loader2 className="h-7 w-7 animate-spin text-emerald-700" />
+            <span className="ml-2 text-sm text-emerald-950/65">
+              Loading logs...
+            </span>
           </div>
         ) : logs.length === 0 ? (
           <div className="text-center py-12">
-            <Activity className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600 text-lg">Tidak ada log</p>
-            <p className="text-gray-500 text-sm mt-1">
+            <Activity className="mx-auto mb-4 h-12 w-12 text-emerald-800/25" />
+            <p className="text-lg font-semibold text-emerald-950">
+              Tidak ada log
+            </p>
+            <p className="mt-1 text-sm text-emerald-950/60">
               Belum ada aktivitas yang tercatat
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-emerald-900/10">
             {logs.map((log) => (
               <div
                 key={log.id}
-                className="p-4 hover:bg-gray-50 transition-colors"
+                className="p-4 transition-colors hover:bg-emerald-50/55"
               >
                 <div className="flex items-start gap-4">
-                  {/* Action Badge */}
                   <div
-                    className={`flex-shrink-0 w-10 h-10 rounded-lg border flex items-center justify-center ${getActionColor(
+                    className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border ${getActionColor(
                       log.action
                     )}`}
                   >
                     {getActionIcon(log.action)}
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4 mb-2">
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-emerald-950">
                           {log.description}
                         </p>
-                        <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
+                        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-emerald-950/60">
                           <span className="flex items-center gap-1">
-                            <User className="w-3 h-3" />
+                            <User className="h-3 w-3" />
                             {log.user?.name || "Unknown User"}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
+                            <Calendar className="h-3 w-3" />
                             {format(
                               new Date(log.createdAt),
                               "dd MMM yyyy, HH:mm",
@@ -310,7 +312,7 @@ export default function ActivityLogs() {
                             )}
                           </span>
                           {log.entityType && (
-                            <span className="px-2 py-0.5 bg-gray-100 rounded text-xs">
+                            <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">
                               {log.entityType}
                             </span>
                           )}
@@ -325,21 +327,23 @@ export default function ActivityLogs() {
                       </span>
                     </div>
 
-                    {/* Metadata (if exists) */}
                     {log.metadata?.changes && (
-                      <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-xs font-medium text-gray-700 mb-2">
+                      <div className="mt-3 rounded-md border border-emerald-900/10 bg-[#fffaf0] p-3">
+                        <p className="mb-2 text-xs font-semibold text-emerald-950/75">
                           Changes:
                         </p>
                         <div className="space-y-1">
                           {Object.entries(log.metadata.changes).map(
                             ([key, value]) => (
-                              <div key={key} className="text-xs text-gray-600">
+                              <div
+                                key={key}
+                                className="text-xs text-emerald-950/65"
+                              >
                                 <span className="font-medium">{key}:</span>{" "}
                                 <span className="text-red-600 line-through">
                                   {JSON.stringify(value.from)}
                                 </span>{" "}
-                                →{" "}
+                                {"->"}{" "}
                                 <span className="text-green-600">
                                   {JSON.stringify(value.to)}
                                 </span>
@@ -357,27 +361,26 @@ export default function ActivityLogs() {
         )}
       </div>
 
-      {/* Pagination */}
       {!loading && logs.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="rounded-lg border border-emerald-900/10 bg-white/80 p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-emerald-950/65">
               Halaman {page} dari {totalPages}
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
-                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="rounded-md border border-emerald-900/15 bg-white px-3 py-2 text-emerald-900 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
-                className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="rounded-md border border-emerald-900/15 bg-white px-3 py-2 text-emerald-900 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </div>

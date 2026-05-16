@@ -1,4 +1,4 @@
-CREATE TABLE "kajian" (
+CREATE TABLE IF NOT EXISTS "kajian" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"slug" varchar(255) NOT NULL,

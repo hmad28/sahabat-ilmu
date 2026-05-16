@@ -9,6 +9,7 @@ import {
   json,
   pgEnum,
   integer,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -60,6 +61,48 @@ export const activityLogs = pgTable("activity_logs", {
   metadata: json("metadata"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Tabel feedback publik
+export const feedback = pgTable("feedback", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  category: varchar("category", { length: 50 }).default("general").notNull(),
+  message: text("message").notNull(),
+  status: varchar("status", { length: 20 }).default("new").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Tabel komentar publik pada kajian
+export const kajianComments = pgTable("kajian_comments", {
+  id: serial("id").primaryKey(),
+  kajianId: integer("kajian_id")
+    .notNull()
+    .references(() => kajian.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Tabel like publik pada kajian
+export const kajianLikes = pgTable(
+  "kajian_likes",
+  {
+    id: serial("id").primaryKey(),
+    kajianId: integer("kajian_id")
+      .notNull()
+      .references(() => kajian.id, { onDelete: "cascade" }),
+    clientId: varchar("client_id", { length: 80 }).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("kajian_likes_kajian_id_client_id_unique").on(
+      table.kajianId,
+      table.clientId
+    ),
+  ]
+);
 
 // ========================================
 // TABEL UNTUK JADWAL SHOLAT
@@ -159,6 +202,14 @@ export type NewKajian = typeof kajian.$inferInsert;
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type NewActivityLog = typeof activityLogs.$inferInsert;
+
+export type Feedback = typeof feedback.$inferSelect;
+export type NewFeedback = typeof feedback.$inferInsert;
+
+export type KajianComment = typeof kajianComments.$inferSelect;
+export type NewKajianComment = typeof kajianComments.$inferInsert;
+export type KajianLike = typeof kajianLikes.$inferSelect;
+export type NewKajianLike = typeof kajianLikes.$inferInsert;
 
 // ========================================
 // TYPES

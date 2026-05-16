@@ -23,6 +23,7 @@ import {
   Settings,
   Lock,
   History,
+  MessageSquare,
 } from "lucide-react";
 import { useUploadThing } from "@/lib/uploadthing";
 import { format } from "date-fns";
@@ -34,6 +35,7 @@ import RichTextEditor from "@/components/RichTextEditor";
 import { useRouter } from "next/navigation";
 import AdminTable from "@/components/AdminTable";
 import ActivityLogs from "@/components/ActivityLogs";
+import FeedbackTable from "@/components/FeedbackTable";
 import Link from "next/link";
 
 
@@ -68,9 +70,9 @@ export default function DashboardPage() {
   const [editingKajian, setEditingKajian] = useState<Kajian | null>(null);
   const [loading, setLoading] = useState(false);
   const [isLoadingList, setIsLoadingList] = useState(true);
-  const [activeTab, setActiveTab] = useState<"kajian" | "admins" | "logs">(
-    "kajian"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "kajian" | "feedback" | "admins" | "logs"
+  >("kajian");
   const [isUploading, setIsUploading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -405,6 +407,10 @@ export default function DashboardPage() {
   };
 
   const stripHtml = (html: string) => {
+    if (typeof document === "undefined") {
+      return html.replace(/<[^>]*>/g, "");
+    }
+
     const tmp = document.createElement("DIV");
     tmp.innerHTML = html;
     return tmp.textContent || tmp.innerText || "";
@@ -418,9 +424,17 @@ export default function DashboardPage() {
     ? kajianList
     : kajianList.filter((k) => k.authorId === session?.user?.id);
 
+  const publishedCount = filteredKajianList.filter(
+    (k) => k.status === "published"
+  ).length;
+  const draftCount = filteredKajianList.filter(
+    (k) => k.status === "draft"
+  ).length;
+  const latestKajian = filteredKajianList[0];
+
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-[#fffaf0]">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
       </div>
     );
@@ -432,336 +446,403 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fffaf0] text-emerald-950">
       <Toaster position="top-right" />
 
-    {/* Header */}
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-3 md:p-4 shadow-lg">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex items-center justify-between">
-                <Link href="/" className="text-xl md:text-2xl font-bold">
-                  <Image
-                    src="/images/sahabat-ilmu-vertikal2.png"
-                    alt="Logo"
-                    width={150}
-                    height={40}
-                    className="inline-block md:w-[200px]"
-                  />
-                </Link>
+      <header className="sticky top-0 z-40 border-b border-emerald-900/10 bg-[#fffaf0]/95 backdrop-blur">
+        <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/images/sahabat-ilmu-horizontal2.png"
+              alt="Sahabat Ilmu"
+              width={190}
+              height={50}
+              className="h-10 w-auto"
+              priority
+            />
+          </Link>
 
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="inline-flex h-10 items-center gap-2 rounded-md border border-emerald-900/15 bg-white/70 px-3 text-sm font-semibold text-emerald-900 transition hover:bg-white"
+            >
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Profil</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="inline-flex h-10 items-center gap-2 rounded-md border border-red-900/15 bg-red-50 px-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
           </div>
+        </nav>
+      </header>
 
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          
-          <div className="flex justify-between items-center flex-wrap gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">
-                  Dashboard Kajian
-                </h1>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <section className="border-b border-emerald-900/10 pb-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-amber-500/30 bg-amber-100 px-2.5 py-1 text-xs font-bold uppercase tracking-[0.18em] text-amber-900">
+                  Admin Workspace
+                </span>
                 {isSuperAdmin && (
-                  <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-                    <Crown className="w-3 h-3" />
-                    SUPER ADMIN
+                  <span className="inline-flex items-center gap-1 rounded-md border border-emerald-700/20 bg-emerald-900 px-2.5 py-1 text-xs font-bold uppercase tracking-[0.16em] text-amber-100">
+                    <Crown className="h-3.5 w-3.5" />
+                    Super Admin
                   </span>
                 )}
               </div>
-              <p className="text-gray-600">
-                Selamat datang, <strong>{session?.user?.name}</strong>
+              <h1 className="text-3xl font-semibold tracking-tight text-emerald-950 sm:text-4xl">
+                Dashboard Kajian
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-emerald-950/70">
+                Kelola artikel kajian, status publikasi, admin, dan aktivitas
+                sistem dari satu ruang kerja yang rapi.
               </p>
-              <p className="text-sm text-gray-500">
-                {isSuperAdmin
-                  ? "Anda dapat mengelola semua konten kajian"
-                  : "Kelola konten kajian Anda"}
+              <p className="mt-1 text-sm font-semibold text-emerald-900">
+                Masuk sebagai {session?.user?.name}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  resetForm();
-                  setShowModal(true);
-                }}
-                className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 flex items-center gap-2 transition-colors"
-              >
-                <Plus className="w-5 h-5" />
-                Tambah Kajian
-              </button>
-              <button
-                onClick={() => setShowProfileModal(true)}
-                className="bg-blue-50 text-blue-600 px-4 py-3 rounded-lg hover:bg-blue-100 flex items-center gap-2 transition-colors"
-              >
-                <Settings className="w-5 h-5" />
-                <span className="hidden sm:inline">Profil</span>
-              </button>
-              <button
-                onClick={handleLogout}
-                className="bg-red-50 text-red-600 px-4 py-3 rounded-lg hover:bg-red-100 flex items-center gap-2 transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-                <span className="hidden sm:inline">Logout</span>
-              </button>
-            </div>
+
+            <button
+              onClick={() => {
+                resetForm();
+                setShowModal(true);
+              }}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-emerald-900 px-4 text-sm font-bold text-amber-50 shadow-sm transition hover:bg-emerald-800"
+            >
+              <Plus className="h-4 w-4" />
+              Tambah Kajian
+            </button>
           </div>
 
           {isSuperAdmin && (
-            <div className="mt-6 border-b border-gray-200">
-              <nav className="flex gap-8">
+            <div className="mt-6 overflow-x-auto">
+              <nav className="inline-flex rounded-lg border border-emerald-900/10 bg-white/70 p-1">
                 <button
                   onClick={() => setActiveTab("kajian")}
-                  className={`pb-4 px-1 border-b-2 font-semibold text-sm transition-colors flex items-center gap-2 ${
+                  className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
                     activeTab === "kajian"
-                      ? "border-emerald-500 text-emerald-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      ? "bg-emerald-900 text-amber-50"
+                      : "text-emerald-950/70 hover:bg-emerald-50 hover:text-emerald-950"
                   }`}
                 >
-                  <BookOpen className="w-5 h-5" />
+                  <BookOpen className="h-4 w-4" />
                   Kelola Kajian
                 </button>
                 <button
-                  onClick={() => setActiveTab("admins")}
-                  className={`pb-4 px-1 border-b-2 font-semibold text-sm transition-colors flex items-center gap-2 ${
-                    activeTab === "admins"
-                      ? "border-emerald-500 text-emerald-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  onClick={() => setActiveTab("feedback")}
+                  className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
+                    activeTab === "feedback"
+                      ? "bg-emerald-900 text-amber-50"
+                      : "text-emerald-950/70 hover:bg-emerald-50 hover:text-emerald-950"
                   }`}
                 >
-                  <Users className="w-5 h-5" />
+                  <MessageSquare className="h-4 w-4" />
+                  Feedback
+                </button>
+                <button
+                  onClick={() => setActiveTab("admins")}
+                  className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
+                    activeTab === "admins"
+                      ? "bg-emerald-900 text-amber-50"
+                      : "text-emerald-950/70 hover:bg-emerald-50 hover:text-emerald-950"
+                  }`}
+                >
+                  <Users className="h-4 w-4" />
                   Daftar Admin
                 </button>
                 <button
                   onClick={() => setActiveTab("logs")}
-                  className={`pb-4 px-1 border-b-2 font-semibold text-sm transition-colors flex items-center gap-2 ${
+                  className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
                     activeTab === "logs"
-                      ? "border-emerald-500 text-emerald-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      ? "bg-emerald-900 text-amber-50"
+                      : "text-emerald-950/70 hover:bg-emerald-50 hover:text-emerald-950"
                   }`}
                 >
-                  <History className="w-5 h-5" />
-                  Activity Logs
+                  <History className="h-4 w-4" />
+                  Log Aktivitas
                 </button>
               </nav>
             </div>
           )}
-        </div>
-      </div>
+        </section>
 
-      {/* Content Area */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {activeTab === "kajian" ? (
-          <>
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Total Kajian</p>
-                    <p className="text-3xl font-bold text-gray-900">
-                      {filteredKajianList.length}
-                    </p>
-                  </div>
-                  <BookOpen className="w-12 h-12 text-emerald-500 opacity-20" />
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Published</p>
-                    <p className="text-3xl font-bold text-gray-900">
-                      {
-                        filteredKajianList.filter(
-                          (k) => k.status === "published"
-                        ).length
-                      }
-                    </p>
-                  </div>
-                  <Shield className="w-12 h-12 text-green-500 opacity-20" />
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-gray-500">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Draft</p>
-                    <p className="text-3xl font-bold text-gray-900">
-                      {
-                        filteredKajianList.filter((k) => k.status === "draft")
-                          .length
-                      }
-                    </p>
-                  </div>
-                  <FileText className="w-12 h-12 text-gray-500 opacity-20" />
-                </div>
-              </div>
-            </div>
-
-            {/* Kajian List */}
-            {isLoadingList ? (
-              <div className="flex justify-center items-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
-                <span className="ml-2 text-gray-600">Memuat data...</span>
-              </div>
-            ) : filteredKajianList.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-xl shadow-sm">
-                <BookOpen className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-600 text-lg">Belum ada kajian</p>
-                <p className="text-gray-500 text-sm mt-1">
-                  Klik &quot;Tambah Kajian&quot; untuk membuat kajian baru
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredKajianList.map((kajian) => {
-                  const isOwner = kajian.authorId === session?.user?.id;
-                  const canEdit = isSuperAdmin || isOwner;
-
-                  return (
-                    <div
-                      key={kajian.id}
-                      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-                    >
-                      {kajian.coverImage && (
-                        <div className="relative h-48 bg-gray-200">
-                          <Image
-                            src={kajian.coverImage}
-                            alt={kajian.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="p-4">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <span
-                            className={`px-2 py-1 text-xs rounded-full ${
-                              kajian.status === "published"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {kajian.status}
-                          </span>
-                          {!isOwner && isSuperAdmin && (
-                            <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                              by {kajian.author.name}
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-2">
-                          {kajian.title}
-                        </h3>
-                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                          {stripHtml(kajian.excerpt)}
-                        </p>
-
-                        <div className="space-y-1 text-xs text-gray-500 mb-4">
-                          {kajian.ustadz && (
-                            <div className="flex items-center gap-1">
-                              <User className="w-3 h-3" />
-                              {kajian.ustadz}
-                            </div>
-                          )}
-                          {kajian.location && (
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {kajian.location}
-                            </div>
-                          )}
-                          {kajian.date && (
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {format(new Date(kajian.date), "dd MMMM yyyy", {
-                                locale: id,
-                              })}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(kajian)}
-                            disabled={!canEdit}
-                            className={`flex-1 px-3 py-2 rounded flex items-center justify-center gap-1 text-sm transition-colors ${
-                              canEdit
-                                ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                            }`}
-                          >
-                            <Edit className="w-4 h-4" />
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(kajian)}
-                            disabled={!canEdit}
-                            className={`flex-1 px-3 py-2 rounded flex items-center justify-center gap-1 text-sm transition-colors ${
-                              canEdit
-                                ? "bg-red-50 text-red-600 hover:bg-red-100"
-                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                            }`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Hapus
-                          </button>
-                        </div>
-                      </div>
+        <div className="py-6">
+          {activeTab === "kajian" ? (
+            <>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div className="rounded-lg border border-emerald-900/10 bg-white/80 p-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-900/55">
+                        Total Kajian
+                      </p>
+                      <p className="mt-2 text-3xl font-semibold text-emerald-950">
+                        {filteredKajianList.length}
+                      </p>
                     </div>
-                  );
-                })}
+                    <BookOpen className="h-10 w-10 text-emerald-800/20" />
+                  </div>
+                </div>
+                <div className="rounded-lg border border-emerald-900/10 bg-white/80 p-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-900/55">
+                        Terbit
+                      </p>
+                      <p className="mt-2 text-3xl font-semibold text-emerald-950">
+                        {publishedCount}
+                      </p>
+                    </div>
+                    <Shield className="h-10 w-10 text-emerald-800/20" />
+                  </div>
+                </div>
+                <div className="rounded-lg border border-emerald-900/10 bg-white/80 p-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-900/55">
+                        Draft
+                      </p>
+                      <p className="mt-2 text-3xl font-semibold text-emerald-950">
+                        {draftCount}
+                      </p>
+                    </div>
+                    <FileText className="h-10 w-10 text-emerald-800/20" />
+                  </div>
+                </div>
               </div>
-            )}
-          </>
-        ) : activeTab === "admins" ? (
-          <AdminTable />
-        ) : (
-          <ActivityLogs />
-        )}
-      </div>
+
+              <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_320px]">
+                <section className="overflow-hidden rounded-lg border border-emerald-900/10 bg-white/85 shadow-sm">
+                  <div className="flex flex-col gap-3 border-b border-emerald-900/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-emerald-950">
+                        Daftar Kajian
+                      </h2>
+                      <p className="text-sm text-emerald-950/60">
+                        Edit cepat, cek status, dan rapikan materi sebelum
+                        tampil di publik.
+                      </p>
+                    </div>
+                    <span className="rounded-md bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-amber-900">
+                      {filteredKajianList.length} item
+                    </span>
+                  </div>
+
+                  {isLoadingList ? (
+                    <div className="flex items-center justify-center py-16">
+                      <Loader2 className="h-7 w-7 animate-spin text-emerald-700" />
+                      <span className="ml-2 text-sm text-emerald-950/65">
+                        Memuat data...
+                      </span>
+                    </div>
+                  ) : filteredKajianList.length === 0 ? (
+                    <div className="px-4 py-14 text-center">
+                      <BookOpen className="mx-auto mb-4 h-12 w-12 text-emerald-800/25" />
+                      <p className="text-lg font-semibold text-emerald-950">
+                        Belum ada kajian
+                      </p>
+                      <p className="mt-1 text-sm text-emerald-950/60">
+                        Klik Tambah Kajian untuk membuat konten pertama.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-emerald-900/10">
+                      {filteredKajianList.map((kajian) => {
+                        const isOwner = kajian.authorId === session?.user?.id;
+                        const canEdit = isSuperAdmin || isOwner;
+
+                        return (
+                          <article
+                            key={kajian.id}
+                            className="grid gap-4 px-4 py-4 transition hover:bg-emerald-50/55 md:grid-cols-[108px_1fr_auto]"
+                          >
+                            <div className="relative h-24 overflow-hidden rounded-md border border-emerald-900/10 bg-emerald-950/5 md:h-20">
+                              {kajian.coverImage ? (
+                                <Image
+                                  src={kajian.coverImage}
+                                  alt={kajian.title}
+                                  fill
+                                  className="object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-full items-center justify-center">
+                                  <BookOpen className="h-8 w-8 text-emerald-800/25" />
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="min-w-0">
+                              <div className="mb-2 flex flex-wrap items-center gap-2">
+                                <span
+                                  className={`rounded-md px-2 py-1 text-xs font-bold uppercase tracking-[0.12em] ${
+                                    kajian.status === "published"
+                                      ? "bg-emerald-100 text-emerald-800"
+                                      : "bg-stone-100 text-stone-700"
+                                  }`}
+                                >
+                                  {kajian.status}
+                                </span>
+                                {!isOwner && isSuperAdmin && (
+                                  <span className="rounded-md bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
+                                    {kajian.author.name}
+                                  </span>
+                                )}
+                              </div>
+                              <h3 className="line-clamp-2 text-base font-semibold text-emerald-950">
+                                {kajian.title}
+                              </h3>
+                              <p className="mt-1 line-clamp-2 text-sm leading-6 text-emerald-950/65">
+                                {stripHtml(kajian.excerpt)}
+                              </p>
+                              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-emerald-950/60">
+                                {kajian.ustadz && (
+                                  <span className="inline-flex items-center gap-1">
+                                    <User className="h-3.5 w-3.5" />
+                                    {kajian.ustadz}
+                                  </span>
+                                )}
+                                {kajian.location && (
+                                  <span className="inline-flex items-center gap-1">
+                                    <MapPin className="h-3.5 w-3.5" />
+                                    {kajian.location}
+                                  </span>
+                                )}
+                                {kajian.date && (
+                                  <span className="inline-flex items-center gap-1">
+                                    <Calendar className="h-3.5 w-3.5" />
+                                    {format(
+                                      new Date(kajian.date),
+                                      "dd MMMM yyyy",
+                                      {
+                                        locale: id,
+                                      }
+                                    )}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2 md:flex-col md:justify-center">
+                              <button
+                                onClick={() => handleEdit(kajian)}
+                                disabled={!canEdit}
+                                className={`inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition md:flex-none ${
+                                  canEdit
+                                    ? "border border-emerald-900/15 bg-white text-emerald-900 hover:bg-emerald-50"
+                                    : "cursor-not-allowed bg-stone-100 text-stone-400"
+                                }`}
+                              >
+                                <Edit className="h-4 w-4" />
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete(kajian)}
+                                disabled={!canEdit}
+                                className={`inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition md:flex-none ${
+                                  canEdit
+                                    ? "border border-red-900/15 bg-red-50 text-red-700 hover:bg-red-100"
+                                    : "cursor-not-allowed bg-stone-100 text-stone-400"
+                                }`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Hapus
+                              </button>
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
+
+                <aside className="h-fit rounded-lg border border-emerald-900/10 bg-emerald-950 p-5 text-amber-50 shadow-sm">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-200/80">
+                    Fokus Hari Ini
+                  </p>
+                  <h2 className="mt-3 text-xl font-semibold">
+                    Rapikan materi sebelum publikasi
+                  </h2>
+                  <div className="mt-5 space-y-4 text-sm text-amber-50/75">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-1 h-2 w-2 rounded-full bg-amber-300" />
+                      <p>Pastikan judul jelas dan ringkasan singkat.</p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="mt-1 h-2 w-2 rounded-full bg-amber-300" />
+                      <p>Gunakan status draft jika konten belum siap tampil.</p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="mt-1 h-2 w-2 rounded-full bg-amber-300" />
+                      <p>Tambahkan cover agar halaman kajian terlihat rapi.</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 rounded-md border border-amber-100/15 bg-white/5 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-200">
+                      Terakhir
+                    </p>
+                    <p className="mt-2 line-clamp-2 text-sm font-semibold text-amber-50">
+                      {latestKajian?.title || "Belum ada kajian"}
+                    </p>
+                  </div>
+                </aside>
+              </div>
+            </>
+          ) : activeTab === "feedback" ? (
+            <FeedbackTable />
+          ) : activeTab === "admins" ? (
+            <AdminTable />
+          ) : (
+            <ActivityLogs />
+          )}
+        </div>
+      </main>
 
       {/* Profile Modal */}
       {showProfileModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-2 sm:p-4 z-50 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl my-4 max-h-[96vh] flex flex-col">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 rounded-t-2xl flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-emerald-950/70 p-3 backdrop-blur-sm sm:p-4">
+          <div className="my-4 flex max-h-[94vh] w-full max-w-md flex-col overflow-hidden rounded-lg border border-emerald-900/15 bg-[#fffaf0] shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-emerald-900/10 bg-white/70 p-5">
+              <div>
+                <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-md bg-emerald-900 text-amber-50">
+                  <Settings className="h-4 w-4" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-xl sm:text-2xl font-bold text-white truncate">
-                    Edit Profil
-                  </h2>
-                  <p className="text-blue-100 text-xs sm:text-sm truncate">
-                    Perbarui nama dan password Anda
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowProfileModal(false);
-                    setProfileData({
-                      name: session?.user?.name || "",
-                      currentPassword: "",
-                      newPassword: "",
-                      confirmPassword: "",
-                    });
-                  }}
-                  className="flex-shrink-0 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
-                >
-                  <X className="w-5 h-5 text-white" />
-                </button>
+                <h2 className="text-xl font-semibold text-emerald-950">
+                  Edit Profil
+                </h2>
+                <p className="mt-1 text-sm text-emerald-950/65">
+                  Perbarui nama akun dan password admin.
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowProfileModal(false);
+                  setProfileData({
+                    name: session?.user?.name || "",
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: "",
+                  });
+                }}
+                className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border border-emerald-900/10 bg-white text-emerald-950 transition hover:bg-emerald-50"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
             <form
               onSubmit={handleProfileUpdate}
-              className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1"
+              className="flex-1 space-y-5 overflow-y-auto p-5"
             >
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                <label className="mb-2 block text-sm font-semibold text-emerald-950">
                   Nama <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -771,23 +852,25 @@ export default function DashboardPage() {
                   onChange={(e) =>
                     setProfileData({ ...profileData, name: e.target.value })
                   }
-                  className="w-full border-2 border-gray-300 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2.5 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                   placeholder="Nama lengkap Anda"
                 />
               </div>
 
-              <div className="border-t-2 border-gray-100 pt-4 sm:pt-5">
-                <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                  <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
-                  <h3 className="font-semibold text-sm sm:text-base text-gray-800">
+              <div className="border-t border-emerald-900/10 pt-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <Lock className="h-4 w-4 flex-shrink-0 text-emerald-800" />
+                  <h3 className="text-sm font-semibold text-emerald-950">
                     Ubah Password
                   </h3>
-                  <span className="text-xs text-gray-500">(opsional)</span>
+                  <span className="text-xs text-emerald-950/50">
+                    (opsional)
+                  </span>
                 </div>
 
-                <div className="space-y-3 sm:space-y-4">
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-emerald-950/75">
                       Password Lama
                     </label>
                     <input
@@ -799,13 +882,13 @@ export default function DashboardPage() {
                           currentPassword: e.target.value,
                         })
                       }
-                      className="w-full border-2 border-gray-300 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2.5 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                       placeholder="Masukkan password lama"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-emerald-950/75">
                       Password Baru
                     </label>
                     <input
@@ -817,14 +900,14 @@ export default function DashboardPage() {
                           newPassword: e.target.value,
                         })
                       }
-                      className="w-full border-2 border-gray-300 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2.5 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                       placeholder="Minimal 6 karakter"
                       minLength={6}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-emerald-950/75">
                       Konfirmasi Password Baru
                     </label>
                     <input
@@ -836,14 +919,14 @@ export default function DashboardPage() {
                           confirmPassword: e.target.value,
                         })
                       }
-                      className="w-full border-2 border-gray-300 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2.5 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                       placeholder="Ketik ulang password baru"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t-2 border-gray-100 flex-shrink-0">
+              <div className="flex flex-col gap-3 border-t border-emerald-900/10 pt-4 sm:flex-row">
                 <button
                   type="button"
                   onClick={() => {
@@ -855,14 +938,14 @@ export default function DashboardPage() {
                       confirmPassword: "",
                     });
                   }}
-                  className="w-full sm:flex-1 border-2 border-gray-300 text-gray-700 font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl hover:bg-gray-100 transition-colors text-sm sm:text-base"
+                  className="w-full rounded-md border border-emerald-900/15 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50 sm:flex-1"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full sm:flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all shadow-lg text-sm sm:text-base"
+                  className="w-full rounded-md bg-emerald-900 px-4 py-2.5 text-sm font-bold text-amber-50 transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-stone-400 sm:flex-1"
                 >
                   {loading ? "Menyimpan..." : "Simpan Perubahan"}
                 </button>
@@ -872,106 +955,134 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Modal Form - Same as before but remove redundant code */}
+      {/* Modal Form */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[95vh] overflow-y-auto my-4 shadow-2xl">
-            <div className="sticky top-0 bg-gradient-to-r from-emerald-600 to-teal-600 p-6 rounded-t-2xl z-10">
-              <h2 className="text-2xl font-bold text-white">
-                {editingKajian ? "Edit Kajian" : "Tambah Kajian Baru"}
-              </h2>
-              <p className="text-emerald-50 text-sm mt-1">
-                {editingKajian
-                  ? "Perbarui informasi kajian"
-                  : "Isi form di bawah untuk menambahkan kajian baru"}
-              </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-emerald-950/75 p-2 backdrop-blur-sm sm:p-4">
+          <div className="flex max-h-[95vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg border border-emerald-900/15 bg-[#fffaf0] shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-emerald-900/10 bg-white/80 p-4 sm:p-5">
+              <div>
+                <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-amber-800">
+                  Editor Kajian
+                </p>
+                <h2 className="text-2xl font-semibold text-emerald-950">
+                  {editingKajian ? "Edit Kajian" : "Tambah Kajian Baru"}
+                </h2>
+                <p className="mt-1 text-sm text-emerald-950/65">
+                  Isi konten utama, atur status, lalu simpan perubahan.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowModal(false);
+                  resetForm();
+                }}
+                className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border border-emerald-900/10 bg-white text-emerald-950 transition hover:bg-emerald-50"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              {/* Same form fields as your original dashboard */}
-              {/* I'll keep the form content identical to save space */}
-              {/* Just copy paste from your original modal form */}
+            <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto">
+              <div className="grid lg:grid-cols-[minmax(0,1fr)_360px]">
+                <div className="space-y-6 p-4 sm:p-6">
+                  <section className="space-y-4">
+                    <div className="flex items-center gap-3 border-b border-emerald-900/10 pb-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-900 text-amber-50">
+                        <BookOpen className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-emerald-950">
+                          Informasi Utama
+                        </h3>
+                        <p className="text-sm text-emerald-950/60">
+                          Judul, ringkasan, dan isi lengkap kajian.
+                        </p>
+                      </div>
+                    </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b-2 border-emerald-200">
-                  <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-emerald-700" />
-                  </div>
-                  <h3 className="font-semibold text-gray-800">
-                    Informasi Utama
-                  </h3>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">
-                    Judul Kajian <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                    className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-                    placeholder="Contoh: Kajian Tafsir Surat Al-Fatihah"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">
-                    Ringkasan Singkat <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    required
-                    rows={3}
-                    value={formData.excerpt}
-                    onChange={(e) =>
-                      setFormData({ ...formData, excerpt: e.target.value })
-                    }
-                    className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none"
-                    placeholder="Tulis ringkasan singkat yang menarik tentang kajian ini..."
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-gray-800">
-                      Konten Lengkap <span className="text-red-500">*</span>
-                    </label>
-                    <label className="cursor-pointer bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg hover:bg-indigo-100 text-xs font-medium flex items-center gap-1 transition-colors">
-                      <FileText className="w-3.5 h-3.5" />
-                      Import DOCX
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-emerald-950">
+                        Judul Kajian <span className="text-red-500">*</span>
+                      </label>
                       <input
-                        type="file"
-                        accept=".docx"
-                        onChange={handleDocxImport}
-                        className="hidden"
+                        type="text"
+                        required
+                        value={formData.title}
+                        onChange={(e) =>
+                          setFormData({ ...formData, title: e.target.value })
+                        }
+                        className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2.5 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
+                        placeholder="Contoh: Kajian Tafsir Surat Al-Fatihah"
                       />
-                    </label>
-                  </div>
-                  <RichTextEditor
-                    content={formData.content}
-                    onChange={(content) =>
-                      setFormData({ ...formData, content })
-                    }
-                  />
-                </div>
-              </div>
+                    </div>
 
-              {/* Other sections from your original form */}
-              {/* Section: Detail Kajian */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b-2 border-blue-200">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <User className="w-5 h-5 text-blue-700" />
-                  </div>
-                  <h3 className="font-semibold text-gray-800">Detail Kajian</h3>
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-emerald-950">
+                        Ringkasan Singkat{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        required
+                        rows={3}
+                        value={formData.excerpt}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            excerpt: e.target.value,
+                          })
+                        }
+                        className="w-full resize-none rounded-md border border-emerald-900/15 bg-white px-3 py-2.5 text-sm leading-6 text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
+                        placeholder="Ringkasan singkat untuk halaman kajian."
+                      />
+                    </div>
+
+                    <div>
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <label className="block text-sm font-semibold text-emerald-950">
+                          Konten Lengkap{" "}
+                          <span className="text-red-500">*</span>
+                        </label>
+                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-emerald-900/10 bg-white px-3 py-2 text-xs font-semibold text-emerald-900 transition hover:bg-emerald-50">
+                          <FileText className="h-3.5 w-3.5" />
+                          Import DOCX
+                          <input
+                            type="file"
+                            accept=".docx"
+                            onChange={handleDocxImport}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                      <RichTextEditor
+                        content={formData.content}
+                        onChange={(content) =>
+                          setFormData({ ...formData, content })
+                        }
+                      />
+                    </div>
+                  </section>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <aside className="space-y-6 border-t border-emerald-900/10 bg-white/60 p-4 sm:p-6 lg:border-l lg:border-t-0">
+                  <section className="space-y-4">
+                    <div className="flex items-center gap-3 border-b border-emerald-900/10 pb-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-amber-100 text-amber-900">
+                        <User className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-emerald-950">
+                          Detail Publikasi
+                        </h3>
+                        <p className="text-sm text-emerald-950/60">
+                          Pemateri, lokasi, tanggal, dan status.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    <label className="mb-2 block text-sm font-semibold text-emerald-950">
                       Ustadz/Pemateri
                     </label>
                     <input
@@ -980,13 +1091,13 @@ export default function DashboardPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, ustadz: e.target.value })
                       }
-                      className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2.5 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                       placeholder="Ustadz Firanda Andirja"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    <label className="mb-2 block text-sm font-semibold text-emerald-950">
                       Lokasi
                     </label>
                     <input
@@ -995,13 +1106,13 @@ export default function DashboardPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, location: e.target.value })
                       }
-                      className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2.5 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                       placeholder="Masjid Istiqlal, Jakarta"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    <label className="mb-2 block text-sm font-semibold text-emerald-950">
                       Tanggal
                     </label>
                     <input
@@ -1010,12 +1121,12 @@ export default function DashboardPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, date: e.target.value })
                       }
-                      className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2.5 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    <label className="mb-2 block text-sm font-semibold text-emerald-950">
                       Status
                     </label>
                     <select
@@ -1023,44 +1134,48 @@ export default function DashboardPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, status: e.target.value })
                       }
-                      className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
+                      className="w-full rounded-md border border-emerald-900/15 bg-white px-3 py-2.5 text-sm text-emerald-950 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                     >
                       <option value="published">Published</option>
                       <option value="draft">Draft</option>
                     </select>
                   </div>
                 </div>
-              </div>
+                  </section>
 
-              {/* Section: Media */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b-2 border-purple-200">
-                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Eye className="w-5 h-5 text-purple-700" />
-                  </div>
-                  <h3 className="font-semibold text-gray-800">Media</h3>
-                </div>
+                  <section className="space-y-4">
+                    <div className="flex items-center gap-3 border-b border-emerald-900/10 pb-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-100 text-emerald-900">
+                        <Eye className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-emerald-950">
+                          Media
+                        </h3>
+                        <p className="text-sm text-emerald-950/60">
+                          Cover dan galeri pendukung.
+                        </p>
+                      </div>
+                    </div>
 
-                {/* Cover Image */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  <label className="mb-2 block text-sm font-semibold text-emerald-950">
                     Cover Image
                   </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-purple-400 transition-colors bg-gray-50">
-                    {/* // Cover Image Input */}
+                  <div className="rounded-md border border-dashed border-emerald-900/20 bg-[#fffaf0] p-4 transition hover:border-emerald-700">
                     <input
                       type="file"
                       accept="image/*"
                       onChange={(e) => handleImageUpload(e, "cover")}
-                      className="w-full text-sm text-gray-900 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 file:cursor-pointer"
+                      className="w-full text-sm text-emerald-950 file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-emerald-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-amber-50 hover:file:bg-emerald-800"
                       disabled={isUploading || isUploadThingUploading}
                     />
-                    <p className="text-xs text-gray-600 mt-2">
+                    <p className="mt-2 text-xs text-emerald-950/55">
                       Recommended: 1200x630px, Max 4MB
                     </p>
                   </div>
                   {formData.coverImage && (
-                    <div className="mt-3 relative h-40 w-full rounded-xl overflow-hidden border-2 border-purple-200">
+                    <div className="relative mt-3 h-40 w-full overflow-hidden rounded-md border border-emerald-900/15">
                       <Image
                         src={formData.coverImage}
                         alt="Preview"
@@ -1072,39 +1187,37 @@ export default function DashboardPage() {
                         onClick={() =>
                           setFormData({ ...formData, coverImage: "" })
                         }
-                        className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow-lg transition-colors"
+                        className="absolute right-2 top-2 rounded-md bg-red-600 p-2 text-white shadow-sm transition hover:bg-red-700"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="h-4 w-4" />
                       </button>
                     </div>
                   )}
                 </div>
 
-                {/* Gallery */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  <label className="mb-2 block text-sm font-semibold text-emerald-950">
                     Gallery (Multiple Images)
                   </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-purple-400 transition-colors bg-gray-50">
-                    {/* // Gallery Input */}
+                  <div className="rounded-md border border-dashed border-emerald-900/20 bg-[#fffaf0] p-4 transition hover:border-emerald-700">
                     <input
                       type="file"
                       accept="image/*"
                       multiple
                       onChange={(e) => handleImageUpload(e, "gallery")}
-                      className="w-full text-sm text-gray-900 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 file:cursor-pointer"
+                      className="w-full text-sm text-emerald-950 file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-emerald-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-amber-50 hover:file:bg-emerald-800"
                       disabled={isUploading || isUploadThingUploading}
                     />
-                    <p className="text-xs text-gray-600 mt-2">
+                    <p className="mt-2 text-xs text-emerald-950/55">
                       Upload multiple images (max 4MB each)
                     </p>
                   </div>
                   {formData.gallery.length > 0 && (
-                    <div className="mt-3 grid grid-cols-4 gap-3">
+                    <div className="mt-3 grid grid-cols-3 gap-2">
                       {formData.gallery.map((url, i) => (
                         <div
                           key={i}
-                          className="relative h-24 rounded-lg overflow-hidden border-2 border-purple-200 group"
+                          className="group relative h-24 overflow-hidden rounded-md border border-emerald-900/15"
                         >
                           <Image
                             src={url}
@@ -1122,9 +1235,9 @@ export default function DashboardPage() {
                                 ),
                               })
                             }
-                            className="absolute top-1 right-1 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute right-1 top-1 rounded-md bg-red-600 p-1.5 text-white opacity-0 transition hover:bg-red-700 group-hover:opacity-100"
                           >
-                            <X className="w-3 h-3" />
+                            <X className="h-3 w-3" />
                           </button>
                         </div>
                       ))}
@@ -1133,31 +1246,32 @@ export default function DashboardPage() {
                 </div>
 
                 {isUploading && (
-                  <div className="flex items-center gap-2 text-purple-700 bg-purple-50 p-3 rounded-lg border border-purple-200">
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                  <div className="flex items-center gap-2 rounded-md border border-emerald-900/10 bg-emerald-50 p-3 text-emerald-800">
+                    <Loader2 className="h-5 w-5 animate-spin" />
                     <span className="text-sm font-medium">
                       Uploading images...
                     </span>
                   </div>
                 )}
+                  </section>
+                </aside>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t-2 border-gray-100">
+              <div className="sticky bottom-0 flex flex-col gap-3 border-t border-emerald-900/10 bg-[#fffaf0]/95 p-4 backdrop-blur sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={() => {
                     setShowModal(false);
                     resetForm();
                   }}
-                  className="flex-1 border-2 border-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-xl hover:bg-gray-100 transition-colors"
+                  className="rounded-md border border-emerald-900/15 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50 sm:w-40"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={loading || isUploading}
-                  className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold px-6 py-3 rounded-xl hover:from-emerald-700 hover:to-teal-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+                  className="inline-flex items-center justify-center rounded-md bg-emerald-900 px-5 py-2.5 text-sm font-bold text-amber-50 transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-stone-400 sm:w-44"
                 >
                   {loading
                     ? "Menyimpan..."

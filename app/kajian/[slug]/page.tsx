@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import toast, { Toaster } from "react-hot-toast";
 import PublicFooter from "@/components/public/PublicFooter";
+import KajianEngagement from "@/components/public/KajianEngagement";
 import PublicNav from "@/components/public/PublicNav";
 import SourceNotice from "@/components/public/SourceNotice";
 
@@ -255,6 +256,8 @@ export default function KajianDetailPage() {
               <Heart className="h-4 w-4 text-red-700" />
             </div>
           </div>
+
+          <KajianEngagement kajianId={kajian.id} />
 
           {kajian.gallery && kajian.gallery.length > 0 && (
             <section className="mt-6 rounded-[2rem] border border-emerald-950/10 bg-white p-5 shadow-sm md:p-8">

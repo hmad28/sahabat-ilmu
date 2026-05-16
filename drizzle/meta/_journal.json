@@ -15,6 +15,20 @@
       "when": 1764063495486,
       "tag": "0001_late_cardiac",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778898122147,
+      "tag": "0002_massive_scrambler",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778899734246,
+      "tag": "0003_whole_earthquake",
+      "breakpoints": true
     }
   ]
 }

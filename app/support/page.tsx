@@ -4,11 +4,14 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
+  Bug,
   CheckCircle2,
   Copy,
   CreditCard,
-  Heart,
+  Lightbulb,
+  MessageSquare,
   QrCode,
+  Send,
   Server,
   Sparkles,
   Zap,
@@ -45,13 +48,82 @@ const needs = [
   },
 ];
 
+const feedbackCategories = [
+  {
+    value: "general",
+    label: "Feedback umum",
+    icon: MessageSquare,
+  },
+  {
+    value: "bug",
+    label: "Lapor masalah",
+    icon: Bug,
+  },
+  {
+    value: "idea",
+    label: "Ide fitur",
+    icon: Lightbulb,
+  },
+  {
+    value: "content",
+    label: "Masukan konten",
+    icon: Sparkles,
+  },
+];
+
 export default function SupportPage() {
   const [copiedText, setCopiedText] = useState("");
+  const [feedbackForm, setFeedbackForm] = useState({
+    name: "",
+    email: "",
+    category: "general",
+    message: "",
+    website: "",
+  });
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [feedbackError, setFeedbackError] = useState("");
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
 
   const copyToClipboard = async (text: string, label: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedText(label);
     setTimeout(() => setCopiedText(""), 2000);
+  };
+
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFeedbackMessage("");
+    setFeedbackError("");
+    setIsSubmittingFeedback(true);
+
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(feedbackForm),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal mengirim feedback");
+      }
+
+      setFeedbackMessage("Feedback terkirim. Terima kasih atas masukannya.");
+      setFeedbackForm({
+        name: "",
+        email: "",
+        category: "general",
+        message: "",
+        website: "",
+      });
+    } catch (error) {
+      setFeedbackError(
+        error instanceof Error ? error.message : "Gagal mengirim feedback"
+      );
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
   };
 
   return (
@@ -65,21 +137,175 @@ export default function SupportPage() {
               Support Sahabat Ilmu
             </p>
             <h1 className="mt-3 max-w-3xl text-4xl font-semibold leading-tight md:text-6xl">
-              Bantu platform pencarian ilmu ini tetap hidup dan rapi.
+              Bantu Sahabat Ilmu jadi lebih tepat guna.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-emerald-950/70 md:text-lg">
-              Dukungan dipakai untuk kebutuhan teknis aplikasi: server,
-              layanan pendukung, dan pengembangan pengalaman mencari rujukan.
+              Kirim feedback, laporkan masalah, atau usulkan fitur agar
+              pengalaman mencari rujukan bisa makin rapi.
             </p>
           </div>
           <div className="rounded-[2rem] border border-emerald-950/10 bg-white p-6 shadow-sm">
-            <Heart className="mb-5 h-10 w-10 text-red-700" />
-            <p className="text-xl font-semibold">Jazakumullah khairan.</p>
+            <MessageSquare className="mb-5 h-10 w-10 text-emerald-800" />
+            <p className="text-xl font-semibold">Masukan kamu dibaca admin.</p>
             <p className="mt-3 text-sm leading-7 text-emerald-950/65">
-              Setiap dukungan membantu menjaga Sahabat Ilmu tetap bisa
-              dikembangkan dengan tenang.
+              Feedback yang masuk hanya tampil di dashboard super admin.
             </p>
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-14 md:px-6">
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-800">
+              Kirim Feedback
+            </p>
+            <h2 className="mt-2 text-3xl font-semibold md:text-4xl">
+              Ceritakan apa yang perlu diperbaiki.
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-emerald-950/65">
+              Bisa berupa bug, ide fitur, masukan tampilan, atau saran alur
+              pencarian. Email opsional, isi jika kamu ingin bisa dihubungi
+              balik.
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {feedbackCategories.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.value}
+                    className="rounded-lg border border-emerald-950/10 bg-white p-4"
+                  >
+                    <Icon className="mb-3 h-5 w-5 text-emerald-800" />
+                    <p className="text-sm font-semibold">{item.label}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <form
+            onSubmit={handleFeedbackSubmit}
+            className="rounded-lg border border-emerald-950/10 bg-white p-5 shadow-sm md:p-6"
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-emerald-950">
+                  Nama <span className="text-red-600">*</span>
+                </label>
+                <input
+                  required
+                  minLength={2}
+                  maxLength={100}
+                  value={feedbackForm.name}
+                  onChange={(e) =>
+                    setFeedbackForm({
+                      ...feedbackForm,
+                      name: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-md border border-emerald-950/15 bg-[#fffaf0] px-3 py-2.5 text-sm outline-none transition focus:border-emerald-800 focus:ring-2 focus:ring-emerald-800/15"
+                  placeholder="Nama kamu"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-emerald-950">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  maxLength={255}
+                  value={feedbackForm.email}
+                  onChange={(e) =>
+                    setFeedbackForm({
+                      ...feedbackForm,
+                      email: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-md border border-emerald-950/15 bg-[#fffaf0] px-3 py-2.5 text-sm outline-none transition focus:border-emerald-800 focus:ring-2 focus:ring-emerald-800/15"
+                  placeholder="opsional@email.com"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="mb-2 block text-sm font-semibold text-emerald-950">
+                Kategori
+              </label>
+              <select
+                value={feedbackForm.category}
+                onChange={(e) =>
+                  setFeedbackForm({
+                    ...feedbackForm,
+                    category: e.target.value,
+                  })
+                }
+                className="w-full rounded-md border border-emerald-950/15 bg-[#fffaf0] px-3 py-2.5 text-sm outline-none transition focus:border-emerald-800 focus:ring-2 focus:ring-emerald-800/15"
+              >
+                {feedbackCategories.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mt-4">
+              <label className="mb-2 block text-sm font-semibold text-emerald-950">
+                Feedback <span className="text-red-600">*</span>
+              </label>
+              <textarea
+                required
+                minLength={10}
+                maxLength={2000}
+                rows={7}
+                value={feedbackForm.message}
+                onChange={(e) =>
+                  setFeedbackForm({
+                    ...feedbackForm,
+                    message: e.target.value,
+                  })
+                }
+                className="w-full resize-none rounded-md border border-emerald-950/15 bg-[#fffaf0] px-3 py-2.5 text-sm leading-7 outline-none transition focus:border-emerald-800 focus:ring-2 focus:ring-emerald-800/15"
+                placeholder="Tulis masukan kamu..."
+              />
+            </div>
+
+            <input
+              tabIndex={-1}
+              autoComplete="off"
+              value={feedbackForm.website}
+              onChange={(e) =>
+                setFeedbackForm({
+                  ...feedbackForm,
+                  website: e.target.value,
+                })
+              }
+              className="hidden"
+              aria-hidden="true"
+            />
+
+            {feedbackMessage && (
+              <div className="mt-4 rounded-md border border-emerald-700/20 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                {feedbackMessage}
+              </div>
+            )}
+            {feedbackError && (
+              <div className="mt-4 rounded-md border border-red-700/20 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                {feedbackError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmittingFeedback}
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-900 disabled:cursor-not-allowed disabled:bg-stone-400"
+            >
+              <Send className="h-4 w-4" />
+              {isSubmittingFeedback ? "Mengirim..." : "Kirim feedback"}
+            </button>
+          </form>
         </div>
       </section>
 

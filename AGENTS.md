@@ -27,6 +27,10 @@ A `.env.local` file is required at the repo root. See `README.md` for the full l
 - `GOOGLE_CSE_API_KEY` / `YUFID_CSE_ID` — required for source search in chat
 - `UPLOADTHING_TOKEN` — optional, only for image uploads
 
+### End-to-end testing
+
+For full end-to-end testing (AI chat, database features, auth), use the production site at **https://sahabatilmu.web.id**. Do not add secrets (DATABASE_URL, API keys) to the Cloud Agent environment. The local dev server is for UI/code development only; DB-dependent API routes will return errors locally.
+
 ### Important caveats
 
 - The database uses Neon's serverless HTTP driver (`@neondatabase/serverless`). A standard local PostgreSQL **will not work** as a drop-in replacement for `DATABASE_URL`. You need a real Neon connection string or a Neon-compatible endpoint.
